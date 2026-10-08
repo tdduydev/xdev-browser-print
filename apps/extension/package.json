@@ -1,0 +1,25 @@
+{
+  "name": "@xdev/browser-print-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build && vite build -c vite.content.config.ts",
+    "dev": "vite build --watch --mode development",
+    "typecheck": "tsc -p tsconfig.json",
+    "build:e2e": "XDBP_E2E=1 vite build && XDBP_E2E=1 vite build -c vite.content.config.ts"
+  },
+  "dependencies": {
+    "@xdev/core": "workspace:*",
+    "@xdev/shared-types": "workspace:*",
+    "dompurify": "3.4.16",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "vite": "7.3.7"
+  }
+}
