@@ -32,6 +32,12 @@ Linux results come from CI run 37777305750 (PR #2, 2026-10-08). Windows has unit
 
 ## Verified devices
 
+A row is added only after a filled record from [MANUAL-TEST.md](MANUAL-TEST.md) with photos of the printout.
+
+| Printer model | Type | Connection | OS + Chrome | Cases passed | Driver / setup | Date | Tester | Record |
+|---|---|---|---|---|---|---|---|---|
+| _none yet_ | | | | | | | | |
+
 No device has reached **Verified on Physical Printer** yet.
 
 ## OS notes (not yet verified on real machines)
