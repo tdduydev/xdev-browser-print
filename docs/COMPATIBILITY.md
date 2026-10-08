@@ -16,19 +16,19 @@ Updated: 2026-10-08.
 
 | Feature | macOS | Windows 10/11 | Linux |
 |---|---|---|---|
-| Extension install, service worker, admin UI | Verified on Browser (Chromium 156 headless, e2e) | Implemented | Implemented |
-| Website pairing, scopes, approval window, revoke | Verified on Browser (e2e) | Implemented | Implemented |
-| Replay, duplicate and rate-limit protection | Verified on Browser (e2e) | Implemented | Implemented |
-| Service worker restart | Verified on Browser (e2e, CDP stop) | Implemented | Implemented |
-| HTML → print window (sanitized, sandboxed) | Verified on Browser (headless; no dialog shown) | Implemented | Implemented |
-| PDF → print window | Verified on Browser (headless; job reaches a final state) | Implemented | Implemented |
+| Extension install, service worker, admin UI | Verified on Browser (Chromium 156 headless, e2e, local) | Implemented (unit tests pass in CI) | Verified on Browser (CI e2e, `ubuntu-latest`) |
+| Website pairing, scopes, approval window, revoke | Verified on Browser (e2e) | Implemented | Verified on Browser (CI e2e) |
+| Replay, duplicate and rate-limit protection | Verified on Browser (e2e) | Implemented | Verified on Browser (CI e2e) |
+| Service worker restart | Verified on Browser (e2e, CDP stop) | Implemented | Verified on Browser (CI e2e) |
+| HTML → print window (sanitized, sandboxed) | Verified on Browser (headless; no dialog shown) | Implemented | Verified on Browser (CI e2e, headless) |
+| PDF → print window | Verified on Browser (headless; job reaches a final state) | Implemented | Verified on Browser (CI e2e, headless) |
 | Chrome print dialog, printer selection | Not tested | Not tested | Not tested |
 | Dialog-free printing via `--kiosk-printing` | UNKNOWN (a vendor reports it is unsupported) | Documented by third parties, not tested | UNKNOWN |
 | WebUSB → ESC/POS (K80/K58) | Implemented | Implemented (usually needs the WinUSB driver) | Implemented (needs a udev rule, `usblp` unbound) |
 | WebUSB → ZPL/TSPL (labels) | Implemented | Implemented | Implemented |
 | Web Serial → ESC/POS/ZPL/TSPL | Implemented | Implemented | Implemented |
 
-The Linux column moves to **Verified on Browser** for e2e-covered rows once the CI e2e job passes on `ubuntu-latest`.
+Linux results come from CI run 37777305750 (PR #2, 2026-10-08). Windows has unit tests in CI but no browser e2e yet.
 
 ## Verified devices
 

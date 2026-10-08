@@ -19,7 +19,7 @@ Test-suite sanity check: two bugs were injected on purpose (rate limit removed; 
 
 Coverage is not measured yet (`@vitest/coverage-v8` not installed).
 
-CI runs the same suites on every push and pull request; see `.github/workflows/ci.yml`.
+CI runs the same suites on every pull request and push to `main` (`.github/workflows/ci.yml`). First CI run (37777305750, PR #2): lint + typecheck, unit tests on Ubuntu/Windows/macOS, build + package, and e2e on `ubuntu-latest` all passed.
 
 ## 2. How to run
 
@@ -136,7 +136,7 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | Real print dialog, printer selection, paper output | Headless Chromium shows no print dialog | BP-13 (manual) |
 | `--kiosk-printing` | Needs headed Chrome and a real printer | BP-13 |
 | WebUSB/Web Serial with real printers (K80, K58, label) | No devices in CI | BP-13 |
-| Windows and Linux e2e | Unit tests run on all three OSes in CI; e2e runs on Linux in CI and was run locally on macOS | BP-12 |
+| Windows e2e | Unit tests pass on Windows in CI; browser e2e runs on Linux (CI) and macOS (local) only | BP-12 |
 | Real `chrome.permissions.request` prompt | Playwright cannot click Chrome's prompt; the e2e build pre-grants localhost | BP-13 |
 | Extension popup | No e2e yet | BP-10 |
 | `confirmEachJob` in real Chrome | Integration tests only | BP-10 |
