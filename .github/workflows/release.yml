@@ -148,8 +148,8 @@ jobs:
       - name: Skip versions already on npm
         id: published
         run: |
-          name=$(tar -xzOf release-npm/*.tgz package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).name")
-          version=$(tar -xzOf release-npm/*.tgz package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version")
+          name=$(tar -xzOf ./release-npm/*.tgz package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).name")
+          version=$(tar -xzOf ./release-npm/*.tgz package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version")
           if npm view "$name@$version" version >/dev/null 2>&1; then
             echo "::notice::$name@$version is already on npm - skipping"
             echo "exists=true" >> "$GITHUB_OUTPUT"
@@ -158,4 +158,5 @@ jobs:
         if: steps.published.outputs.exists != 'true'
         env:
           DIST_TAG: ${{ needs.release.outputs.dist_tag }}
-        run: npm publish release-npm/*.tgz --access public --tag "$DIST_TAG"
+        # The ./ matters: without it npm reads release-npm/x.tgz as a GitHub owner/repo shorthand.
+        run: npm publish ./release-npm/*.tgz --access public --tag "$DIST_TAG"
