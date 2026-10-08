@@ -14,6 +14,24 @@ npm install @tdduydev/browser-print
 
 Tiếng Việt: [docs/vi](docs/vi/ARCHITECTURE.md)
 
+## Showcase
+
+A React app connects to the extension, the user approves the print scope once, and an A5 prescription goes to Chrome's print dialog.
+
+![Approval window: the extension asks before granting the print scope to the site](docs/images/showcase/02-approval.png)
+*The extension asks before a site may print; the grant is for that exact origin.*
+
+![Connected app listing the printers configured in the extension](docs/images/showcase/03-connected.png)
+*Connected: the app sees the granted scopes and the printer profiles.*
+
+![The A5 prescription rendered by the extension print window](docs/images/showcase/04-print-preview.png)
+*The A5 prescription the extension renders for the print dialog (sanitized, sandboxed frame).*
+
+![Options page job history with the prescription and receipt jobs](docs/images/showcase/08-admin-jobs.png)
+*Job history keeps metadata only: the prescription ends `UNKNOWN / PRINT_DIALOG_CLOSED`, the K80 receipt with no USB printer attached fails `DEVICE_NOT_FOUND`.*
+
+Verified: these screenshots come from an automated run (`pnpm showcase <app-dist>`, [scripts/showcase.mjs](scripts/showcase.mjs)) of a Vite + React app with `@tdduydev/browser-print@0.3.2` installed from npm, against the extension e2e build, on 2026-10-08. Demo data only (fake clinic and patient). All screenshots: [docs/images/showcase](docs/images/showcase).
+
 | Path | Contents |
 |---|---|
 | `apps/extension` | Extension: service worker, content script, admin UI, print window |
@@ -35,6 +53,7 @@ pnpm build         # apps/extension/dist + packages/browser-print-sdk/dist
 pnpm check:sdk-package # npm pack --dry-run + SDK checks (after build)
 pnpm package       # release/xdev-browser-print-<version>.zip
 pnpm cws:screenshots  # Chrome Web Store screenshots -> docs/images/cws (1280x800)
+pnpm showcase [app-dist] # end-to-end run of a built app + extension -> docs/images/showcase (1280x800)
 ```
 
 Try the extension: open `chrome://extensions`, enable Developer mode, click **Load unpacked** → `apps/extension/dist`.
