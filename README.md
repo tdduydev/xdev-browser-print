@@ -12,6 +12,7 @@ Tiếng Việt: [docs/vi](docs/vi/ARCHITECTURE.md)
 | `packages/browser-print-sdk` | SDK `@xdev/browser-print` and the `useBrowserPrint` hook |
 | `packages/core` | Shared logic: origins, configuration, router, job states, encoders |
 | `packages/shared-types` | Types and protocol |
+| `examples/react-demo` | Vite + React example app using `useBrowserPrint` ([README](examples/react-demo/README.md)) |
 | `tests/e2e` | Playwright e2e on real Chromium |
 | `docs` | Design documents |
 
@@ -23,6 +24,7 @@ pnpm lint && pnpm typecheck
 pnpm test          # unit + integration
 pnpm test:e2e      # e2e (first time: pnpm exec playwright install chromium)
 pnpm build         # apps/extension/dist + packages/browser-print-sdk/dist
+pnpm check:sdk-package # npm pack --dry-run + SDK checks (after build)
 pnpm package       # release/xdev-browser-print-<version>.zip
 ```
 
@@ -33,9 +35,11 @@ Try the extension: open `chrome://extensions`, enable Developer mode, click **Lo
 | Workflow | Trigger | Does |
 |---|---|---|
 | `ci.yml` | Push to `main`, pull requests | Lint, typecheck; unit tests on Ubuntu/Windows/macOS; build + release ZIP artifact; Playwright e2e |
-| `release.yml` | Tag `v*.*.*` | Checks the tag matches the extension version, builds, creates a GitHub Release with the ZIP, then (optionally) uploads to the Chrome Web Store |
+| `release.yml` | Tag `v*.*.*` | Checks SDK/extension/tag versions, builds and verifies the SDK tarball, creates a GitHub Release, then publishes the SDK through the npm environment (skipped until the SDK license is approved) and uploads to the Chrome Web Store |
 
-Chrome Web Store upload runs only when the `chrome-web-store` environment has the secrets `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN`, `CWS_EXTENSION_ID`. A successful upload means the item was **submitted for review**, not published.
+Chrome Web Store upload (API V2) runs only when the `chrome-web-store` environment has the variables `GCP_WIF_PROVIDER`, `CWS_SERVICE_ACCOUNT`, `CWS_PUBLISHER_ID`, `CWS_EXTENSION_ID`. CI signs in through Workload Identity Federation as the `cws-publisher` service account, so no secret is stored; that service account must be added in the Chrome Web Store Developer Dashboard. A successful upload means the item was **submitted for review**, not published.
+
+SDK publication setup and pending registry/license decisions: [EN](docs/SDK-RELEASE.md) / [VI](docs/vi/SDK-RELEASE.md).
 
 ## Documents
 

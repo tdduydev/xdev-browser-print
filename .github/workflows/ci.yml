@@ -43,7 +43,16 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm test:coverage
+        if: matrix.os == 'ubuntu-latest'
       - run: pnpm test
+        if: matrix.os != 'ubuntu-latest'
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest' && always()
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: warn
 
   build:
     name: Build & package
@@ -58,6 +67,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Verify SDK tarball (npm pack --dry-run)
+        run: pnpm check:sdk-package
       - run: pnpm package
       - uses: actions/upload-artifact@v4
         with:
