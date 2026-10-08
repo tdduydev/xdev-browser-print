@@ -8,7 +8,7 @@ một lần release.
 
 1. Merge PR có tiêu đề theo Conventional Commits vào `main`. release-please giữ
    một Release PR chứa version tiếp theo và CHANGELOG.
-2. Merge Release PR. Việc này tạo tag `vX.Y.Z` và chạy `release.yml`: lint,
+2. Workflow tự merge Release PR, tạo tag `vX.Y.Z` và chạy `release.yml`: lint,
    typecheck, unit test và e2e, build, `pnpm check:sdk-package`, rồi
    `pnpm pack` SDK (đổi `workspace:*` thành version thật). File `.tgz` được đính
    kèm vào GitHub Release.

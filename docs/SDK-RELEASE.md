@@ -8,7 +8,7 @@ version and one release.
 
 1. Merge PRs with Conventional Commit titles into `main`. release-please keeps a
    Release PR with the next version and the CHANGELOG.
-2. Merge the Release PR. It tags `vX.Y.Z` and runs `release.yml`: lint,
+2. The workflow merges the Release PR by itself, tags `vX.Y.Z` and runs `release.yml`: lint,
    typecheck, unit and e2e tests, build, `pnpm check:sdk-package`, then
    `pnpm pack` of the SDK (which rewrites `workspace:*` ranges). The `.tgz` is
    attached to the GitHub Release.
