@@ -82,8 +82,12 @@ jobs:
           if-no-files-found: error
 
   e2e:
-    name: E2E (Chromium + extension)
-    runs-on: ubuntu-latest
+    name: E2E (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     needs: [check]
     steps:
       - uses: actions/checkout@v5
@@ -98,7 +102,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.os }}
           path: |
             playwright-report/
             test-results/
