@@ -24,6 +24,7 @@ pnpm test          # unit + integration
 pnpm test:e2e      # e2e (first time: pnpm exec playwright install chromium)
 pnpm build         # apps/extension/dist + packages/browser-print-sdk/dist
 pnpm package       # release/xdev-browser-print-<version>.zip
+pnpm cws:screenshots  # Chrome Web Store screenshots -> docs/images/cws (1280x800)
 ```
 
 Try the extension: open `chrome://extensions`, enable Developer mode, click **Load unpacked** → `apps/extension/dist`.
@@ -45,6 +46,8 @@ Chrome Web Store upload runs only when the `chrome-web-store` environment has th
 - [Testing](docs/TESTING.md)
 - [Compatibility matrix](docs/COMPATIBILITY.md)
 - [Phase 2 design and task plan](docs/PHASE-2.md)
+- [Chrome Web Store submission](docs/CHROME_WEB_STORE.md)
+- [Privacy policy](docs/PRIVACY.md)
 
 ## Key limitations
 
