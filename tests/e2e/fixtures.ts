@@ -101,3 +101,29 @@ export async function openSite(context: BrowserContext, url: string): Promise<Pa
   await page.waitForFunction(() => (window as unknown as { sdkReady?: boolean }).sdkReady === true);
   return page;
 }
+
+/**
+ * Turns on "Ask before every print" through the Sites screen. The checkbox is controlled and
+ * only flips after the worker saves and broadcasts the config, so wait for storage too:
+ * a job sent before that would skip the approval window.
+ */
+export async function enableConfirmEachJob(admin: Page, origin: string) {
+  await admin.getByTestId('nav-sites').click();
+  const checkbox = admin.getByRole('row').filter({ hasText: origin }).getByRole('checkbox', { name: 'Hỏi xác nhận mỗi lần in' });
+  await expect(checkbox).not.toBeChecked();
+  await checkbox.click();
+  await expect(checkbox).toBeChecked();
+  await expect
+    .poll(async () => (await internal<{ sites: { origin: string; confirmEachJob?: boolean }[] }>(admin, 'config.get')).sites.find((s) => s.origin === origin)?.confirmEachJob)
+    .toBe(true);
+}
+
+/**
+ * Counts print windows opened for the rest of the test. Print windows close themselves
+ * 1.5 s after the dialog, so a snapshot of context.pages() can miss one.
+ */
+export function countPrintWindows(context: BrowserContext): () => number {
+  const pages: Page[] = [];
+  context.on('page', (p) => pages.push(p));
+  return () => pages.filter((p) => p.url().includes('print.html')).length;
+}
