@@ -30,7 +30,7 @@ A React app connects to the extension, the user approves the print scope once, a
 ![Options page job history with the prescription and receipt jobs](docs/images/showcase/08-admin-jobs.png)
 *Job history keeps metadata only: the prescription ends `UNKNOWN / PRINT_DIALOG_CLOSED`, the K80 receipt with no USB printer attached fails `DEVICE_NOT_FOUND`.*
 
-Verified: these screenshots come from an automated run (`pnpm showcase <app-dist>`, [scripts/showcase.mjs](scripts/showcase.mjs)) of a Vite + React app with `@tdduydev/browser-print@0.3.2` installed from npm, against the extension e2e build, on 2026-10-08. Demo data only (fake clinic and patient). All screenshots: [docs/images/showcase](docs/images/showcase).
+Verified: these screenshots come from an automated run (`SHOWCASE_OUT=docs/images/showcase pnpm showcase <app-dist>`, [scripts/showcase.mjs](scripts/showcase.mjs)) of a Vite + React app with `@tdduydev/browser-print@0.3.2` installed from npm, against the extension e2e build, on 2026-10-08. Demo data only (fake clinic and patient). All screenshots: [docs/images/showcase](docs/images/showcase).
 
 | Path | Contents |
 |---|---|
@@ -53,7 +53,7 @@ pnpm build         # apps/extension/dist + packages/browser-print-sdk/dist
 pnpm check:sdk-package # npm pack --dry-run + SDK checks (after build)
 pnpm package       # release/xdev-browser-print-<version>.zip
 pnpm cws:screenshots  # Chrome Web Store screenshots -> docs/images/cws (1280x800)
-pnpm showcase [app-dist] # end-to-end run of a built app + extension -> docs/images/showcase (1280x800)
+pnpm showcase [app-dist] # end-to-end check of a built app + extension -> test-results/showcase (1280x800)
 ```
 
 Try the extension: open `chrome://extensions`, enable Developer mode, click **Load unpacked** → `apps/extension/dist`.
