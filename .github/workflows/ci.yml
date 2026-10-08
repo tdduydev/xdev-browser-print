@@ -58,6 +58,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Verify SDK tarball (npm pack --dry-run)
+        run: pnpm check:sdk-package
       - run: pnpm package
       - uses: actions/upload-artifact@v4
         with:
