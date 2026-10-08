@@ -34,8 +34,10 @@ jobs:
         if: steps.rp.outputs.pr
         env:
           GH_TOKEN: ${{ github.token }}
-          PR: ${{ fromJSON(steps.rp.outputs.pr).number }}
+          # Parsed in the shell: fromJSON('') in step env failed the whole job when no Release PR was opened.
+          PR_JSON: ${{ steps.rp.outputs.pr }}
         run: |
+          PR=$(jq -r .number <<<"$PR_JSON")
           # GitHub computes mergeability asynchronously right after the PR is opened or updated.
           for _ in 1 2 3 4 5 6; do
             if gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge; then exit 0; fi
