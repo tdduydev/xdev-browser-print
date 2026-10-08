@@ -35,7 +35,7 @@ version goes up by hand from a maintainer's machine:
 pnpm install --frozen-lockfile
 pnpm --filter @tdduydev/browser-print build
 pnpm --filter @tdduydev/browser-print pack --pack-destination release-npm
-npm publish release-npm/tdduydev-browser-print-*.tgz --access public
+npm publish ./release-npm/tdduydev-browser-print-*.tgz --access public
 ```
 
 Then on npmjs.com → package → Settings → Trusted publishing, add GitHub Actions
