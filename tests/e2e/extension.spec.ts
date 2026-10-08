@@ -40,6 +40,36 @@ test.describe('extension package', () => {
   });
 });
 
+test.describe('extension popup', () => {
+  async function openPopup(context: import('@playwright/test').BrowserContext, extensionId: string, activeUrl: string) {
+    const popup = await context.newPage();
+    await popup.addInitScript((url) => {
+      chrome.tabs.query = async () => [{ url } as chrome.tabs.Tab];
+    }, activeUrl);
+    await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+    return popup;
+  }
+
+  test('localhost can be paired, shows scopes, and can be revoked', async ({ context, extensionId, site, admin }) => {
+    const popup = await openPopup(context, extensionId, site.origin);
+    await expect(popup.getByText('Chưa được phép')).toBeVisible();
+    await popup.getByRole('button', { name: 'Cho phép website này' }).click();
+    await expect(popup.getByText(/Đã được phép in.*read, print/)).toBeVisible();
+    await expect(popup.getByRole('button', { name: 'Thu hồi' })).toBeVisible();
+    const { sites } = await internal<{ sites: { origin: string; scopes: string[] }[] }>(admin, 'config.get');
+    expect(sites.find((grant) => grant.origin === site.origin)?.scopes.sort()).toEqual(['print', 'read']);
+
+    await popup.getByRole('button', { name: 'Thu hồi' }).click();
+    await expect(popup.getByText('Chưa được phép')).toBeVisible();
+  });
+
+  test('unsupported browser pages show the unsupported-page message', async ({ context, extensionId }) => {
+    const popup = await openPopup(context, extensionId, 'chrome://settings');
+    await expect(popup.getByText('Trang này không thể ghép nối (chỉ https hoặc localhost).')).toBeVisible();
+    await expect(popup.getByRole('button', { name: 'Cho phép website này' })).toHaveCount(0);
+  });
+});
+
 test.describe('website security', () => {
   test('an origin that was never allowed gets no bridge', async ({ context, admin, site }) => {
     await internal(admin, 'profile.upsert', { profile: A5_PROFILE });
