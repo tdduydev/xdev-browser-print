@@ -33,7 +33,9 @@ for (const dependency of Object.values({ ...sdk.dependencies, ...sdk.optionalDep
   assert(!dependency.startsWith('workspace:'), 'Published dependencies must not use workspace ranges');
 }
 // SDK_VERSION is sent to the extension in the handshake; a stale value misreports the client version.
-const bundle = readFileSync(new URL('dist/index.js', sdkDirectory), 'utf8');
-assert(bundle.includes(`'${sdk.version}'`) || bundle.includes(`"${sdk.version}"`),
-  `dist/index.js does not contain SDK_VERSION ${sdk.version}`);
+// The ESM build puts SDK_VERSION in a shared chunk, so search every JS file of the tarball.
+const bundles = [...files].filter((path) => path.endsWith('.js') || path.endsWith('.cjs'))
+  .map((path) => readFileSync(new URL(path, sdkDirectory), 'utf8'));
+assert(bundles.some((code) => code.includes(`SDK_VERSION = "${sdk.version}"`) || code.includes(`SDK_VERSION = '${sdk.version}'`)),
+  `No SDK bundle sets SDK_VERSION to ${sdk.version}`);
 console.log(`SDK pack verified: ${packed.filename} (${files.size} files)`);
