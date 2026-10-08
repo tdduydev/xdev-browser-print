@@ -4,21 +4,28 @@ on:
   push:
     tags: ['v*.*.*']
 
+# Each job asks for what it needs; outward steps run in protected environments.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release:
     name: Build, test & GitHub Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      npm_ready: ${{ steps.sdk.outputs.npm_ready }}
+      dist_tag: ${{ steps.sdk.outputs.dist_tag }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Fails fast, before the slow test steps, when someone tags the wrong version.
       - name: Tag must match SDK and extension versions
         run: |
           node --input-type=module -e "import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs'; const version = JSON.parse(readFileSync('packages/browser-print-sdk/package.json')).version; assert.equal(version, JSON.parse(readFileSync('apps/extension/package.json')).version); assert.equal(process.env.GITHUB_REF_NAME, 'v' + version);"
@@ -29,15 +36,39 @@ jobs:
       - run: pnpm test:e2e
       - run: pnpm build
       - run: pnpm check:sdk-package "$GITHUB_REF_NAME"
+      # pnpm pack (not npm) rewrites workspace:* ranges; the npm job publishes this exact tested tarball.
+      - run: pnpm --filter @xdev/browser-print pack --pack-destination "$GITHUB_WORKSPACE/release-npm"
+      - name: Decide whether the SDK goes to npm
+        id: sdk
+        run: |
+          license=$(node -p "require('./packages/browser-print-sdk/package.json').license || ''")
+          if [ -n "$license" ] && [ "$license" != "UNLICENSED" ] && [ -f packages/browser-print-sdk/LICENSE ]; then
+            echo "npm_ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::SDK license not approved (license=$license, LICENSE file required) - npm publish skipped"
+            echo "npm_ready=false" >> "$GITHUB_OUTPUT"
+          fi
+          case "$GITHUB_REF_NAME" in
+            *-*) echo "dist_tag=next" >> "$GITHUB_OUTPUT" ;;
+            *) echo "dist_tag=latest" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sdk-tarball
+          path: release-npm/*.tgz
+          if-no-files-found: error
       - run: pnpm package
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: extension-zip
           path: release/
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release/*.zip release/*.sha256 --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        run: |
+          prerelease=""
+          case "$GITHUB_REF_NAME" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" release/*.zip release/*.sha256 release-npm/*.tgz --title "$GITHUB_REF_NAME" --generate-notes --verify-tag $prerelease
 
   chrome-web-store:
     name: Upload to Chrome Web Store
@@ -46,12 +77,12 @@ jobs:
     # Protected environment: add required reviewers in repo settings so a human approves each upload.
     environment: chrome-web-store
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: extension-zip
           path: release/
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
       - name: Upload and submit for review
@@ -60,32 +91,29 @@ jobs:
           CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
           CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
           CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
-        run: node scripts/publish-cws.mjs release/xdev-browser-print-${GITHUB_REF_NAME#v}.zip
+        run: node scripts/publish-cws.mjs "release/xdev-browser-print-${GITHUB_REF_NAME#v}.zip"
 
   npm-publish:
     name: Publish SDK to npm
     needs: [release]
+    # Skipped (not failed) until the SDK license is approved, so tags still release the extension.
+    if: needs.release.outputs.npm_ready == 'true'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sdk-tarball
+          path: release-npm/
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
-          cache: pnpm
           registry-url: https://registry.npmjs.org
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @xdev/browser-print build
-      - run: pnpm check:sdk-package "$GITHUB_REF_NAME"
-      - name: Require an approved public SDK license
-        run: |
-          node --input-type=module -e "import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs'; const pkg = JSON.parse(readFileSync('packages/browser-print-sdk/package.json')); assert(pkg.license && pkg.license !== 'UNLICENSED', 'Decide and approve the SDK license before publishing publicly');"
       - name: Publish with provenance
-        working-directory: packages/browser-print-sdk
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --provenance --access public --registry https://registry.npmjs.org
+          DIST_TAG: ${{ needs.release.outputs.dist_tag }}
+        run: npm publish release-npm/*.tgz --provenance --access public --tag "$DIST_TAG"

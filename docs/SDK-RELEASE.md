@@ -2,8 +2,10 @@
 
 The SDK package name remains `@xdev/browser-print`. The release workflow prepares
 public npmjs publishing after the GitHub Release, independently of the Chrome Web
-Store job. **Public registry and license approval remain pending.** The publish
-job refuses `UNLICENSED`; do not change the license without owner approval. If the
+Store job. **Public registry and license approval remain pending.** While the
+SDK is `UNLICENSED` or has no `packages/browser-print-sdk/LICENSE` file, the
+`npm-publish` job is skipped (not failed), so a tag still releases the extension.
+Do not change the license without owner approval. If the
 owner chooses private GitHub Packages, revise the registry, scope/authentication
 and provenance requirements before enabling publication.
 
@@ -24,6 +26,17 @@ Before the first public release:
    immutable; choose a fresh version for every attempt that actually publishes.
 7. Confirm the npm package version and provenance, and install it in an external
    consumer to check ESM, CommonJS, TypeScript and the optional React entry.
+
+How the workflow publishes:
+
+- The `release` job packs the SDK with `pnpm pack` (which rewrites `workspace:*`
+  ranges) after lint, typecheck, unit and e2e tests, and attaches the `.tgz` to
+  the GitHub Release.
+- `npm-publish` downloads that exact tarball and runs
+  `npm publish <tgz> --provenance --access public`. It does not rebuild.
+- Tags with a prerelease suffix (`v1.2.0-beta.1`) publish under the `next`
+  dist-tag and create a GitHub prerelease; other tags publish under `latest`.
+- Actions are pinned to commit SHAs.
 
 CI builds the SDK and runs `npm pack --dry-run` via `pnpm check:sdk-package`.
 This verifies export files, README, declarations without unpublished workspace
