@@ -17,7 +17,8 @@
     "test:e2e": "pnpm --filter @xdev/browser-print build && pnpm --filter @xdev/react-demo build && pnpm --filter @xdev/browser-print-extension build:e2e && playwright test",
     "package": "node scripts/package-extension.mjs",
     "release": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm package",
-    "check:sdk-package": "node scripts/check-sdk-package.mjs"
+    "check:sdk-package": "node scripts/check-sdk-package.mjs",
+    "cws:screenshots": "pnpm --filter @xdev/browser-print-extension build && node scripts/cws-screenshots.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

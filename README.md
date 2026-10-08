@@ -26,6 +26,7 @@ pnpm test:e2e      # e2e (first time: pnpm exec playwright install chromium)
 pnpm build         # apps/extension/dist + packages/browser-print-sdk/dist
 pnpm check:sdk-package # npm pack --dry-run + SDK checks (after build)
 pnpm package       # release/xdev-browser-print-<version>.zip
+pnpm cws:screenshots  # Chrome Web Store screenshots -> docs/images/cws (1280x800)
 ```
 
 Try the extension: open `chrome://extensions`, enable Developer mode, click **Load unpacked** → `apps/extension/dist`.
@@ -49,6 +50,8 @@ SDK publication setup and pending registry/license decisions: [EN](docs/SDK-RELE
 - [Testing](docs/TESTING.md)
 - [Compatibility matrix](docs/COMPATIBILITY.md)
 - [Phase 2 design and task plan](docs/PHASE-2.md)
+- [Chrome Web Store submission](docs/CHROME_WEB_STORE.md)
+- [Privacy policy](docs/PRIVACY.md)
 
 ## Key limitations
 
