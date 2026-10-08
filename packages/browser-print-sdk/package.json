@@ -1,6 +1,6 @@
 {
   "name": "@xdev/browser-print",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript SDK for web apps to print through the xDev Browser Print Chrome extension.",
   "license": "UNLICENSED",
   "type": "module",
