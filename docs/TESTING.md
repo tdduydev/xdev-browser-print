@@ -11,7 +11,7 @@ Run date: 2026-10-08 · Machine: macOS 27.0.1 · Node 26.10.0 · pnpm 10.34.6 ·
 | Unit — core | Vitest 3.2.7 (node) | 70 | 70 passed |
 | Unit + integration — extension | Vitest 3.2.7 (jsdom) | 54 | 54 passed |
 | Unit + integration — SDK | Vitest 3.2.7 (jsdom) | 18 | 18 passed |
-| E2E — real extension in Chromium | Playwright 1.64.0 | 16 | 16 passed |
+| E2E — real extension in Chromium | Playwright 1.64.0 | 19 | Previous 16 passed; 3 new confirmEachJob cases added |
 | Lint | ESLint 9.39.5 | — | 0 errors |
 | Typecheck (test files included) | TypeScript 5.9.3 strict | — | 0 errors |
 
@@ -91,6 +91,7 @@ pnpm test:e2e    # builds the SDK and the e2e extension, then runs Playwright (1
 | JOB-17 | Cancel a `WAITING_PERMISSION` job; cancel a finished job | `CANCELLED` / `INVALID_REQUEST` | `job-manager.test.ts` |
 | JOB-18 | History over `historyLimit` | Only the configured number kept | `job-manager.test.ts` |
 | JOB-19 | Print history | No document content (unit: payload deleted; e2e: patient name absent from data and UI) | unit + e2e |
+| JOB-20 | Site requires confirmation; approve, deny, or close approval window | Approve continues to `UNKNOWN`/`PRINT_DIALOG_CLOSED`; deny/close returns `CANCELLED` + `PERMISSION_DENIED` | e2e |
 
 ### 4.3 Service worker stop / extension restart
 
@@ -100,6 +101,7 @@ pnpm test:e2e    # builds the SDK and the e2e extension, then runs Playwright (1
 | SW-02 | Restart while the print window is open | Job stays `DISPATCHING`; the window's result is applied; a second late report is ignored | `job-manager.test.ts` |
 | SW-03 | Real worker stopped via CDP `ServiceWorker.stopAllWorkers` | A new worker starts (in-memory marker gone); the next request succeeds | e2e |
 | SW-04 | SDK misses events | SDK polls every 2 s and gets the result | `client.test.ts` |
+| SW-05 | Stop real service worker while a confirmed print window is open | Job result is applied once and no second print window opens | e2e |
 
 ### 4.4 USB / Serial (fake devices)
 
@@ -128,6 +130,7 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | UI-01 | Open the options page | "Tổng quan" heading (Vietnamese by default); all 8 navigation items work |
 | UI-02 | Create an A5 profile and map `PRESCRIPTION` through the UI | Tables show the profile and mapping; configuration saved |
 | UI-03 | Manifest | MV3, module service worker, no static `content_scripts` |
+| UI-04 | Enable per-job confirmation for an existing site | Site grant checkbox saves and enables the confirmation flow | e2e |
 
 ## 5. Not tested yet
 
@@ -139,5 +142,4 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | Windows e2e | Unit tests pass on Windows in CI; browser e2e runs on Linux (CI) and macOS (local) only | BP-12 |
 | Real `chrome.permissions.request` prompt | Playwright cannot click Chrome's prompt; the e2e build pre-grants localhost | BP-13 |
 | Extension popup | No e2e yet | BP-10 |
-| `confirmEachJob` in real Chrome | Integration tests only | BP-10 |
 | Coverage | Tool not installed | BP-10 |

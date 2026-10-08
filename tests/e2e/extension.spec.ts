@@ -112,6 +112,68 @@ test.describe('website security', () => {
 });
 
 test.describe('printing', () => {
+  test('confirmEachJob is enabled in Sites and approval continues the job', async ({ context, admin, site }) => {
+    await configure(admin, site.origin);
+    await admin.getByTestId('nav-sites').click();
+    const grant = admin.getByRole('row').filter({ hasText: site.origin });
+    await grant.locator('input[type=checkbox]').last().check();
+    await expect(grant.locator('input[type=checkbox]').last()).toBeChecked();
+
+    const page = await openSite(context, `${site.origin}/`);
+    const approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    const result = page.evaluate(() => new (window as unknown as Win).XDevBrowserPrint().print({
+      documentType: 'PRESCRIPTION', format: 'HTML', data: '<h1>approved</h1>',
+    }));
+    const win = await approval;
+    await expect(win.getByTestId('approve-origin')).toHaveText(site.origin);
+    await win.getByTestId('approve-allow').click();
+    const printWindow = await context.waitForEvent('page', (p) => p.url().includes('print.html'));
+    await expect(printWindow.frameLocator('iframe.print-frame').locator('h1')).toHaveText('approved');
+    await expect.poll(async () => (await internal<any[]>(admin, 'jobs.list', { limit: 10 }))[0]?.state).toBe('UNKNOWN');
+    expect(await result).toMatchObject({ state: 'UNKNOWN', outcome: 'PRINT_DIALOG_CLOSED' });
+  });
+
+  test('denying or closing a job approval returns PERMISSION_DENIED', async ({ context, admin, site }) => {
+    await configure(admin, site.origin);
+    await admin.getByTestId('nav-sites').click();
+    const grant = admin.getByRole('row').filter({ hasText: site.origin });
+    await grant.locator('input[type=checkbox]').last().check();
+    const page = await openSite(context, `${site.origin}/`);
+    const request = () => page.evaluate(() => new (window as unknown as Win).XDevBrowserPrint().print({
+      documentType: 'PRESCRIPTION', format: 'HTML', data: '<p>approval required</p>',
+    }));
+
+    let approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    let result = request();
+    await (await approval).getByTestId('approve-deny').click();
+    expect(await result).toMatchObject({ state: 'CANCELLED', errorCode: 'PERMISSION_DENIED' });
+
+    approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    result = request();
+    const win = await approval;
+    await win.close();
+    expect(await result).toMatchObject({ state: 'CANCELLED', errorCode: 'PERMISSION_DENIED' });
+  });
+
+  test('stopping the service worker while a confirmed print window is open does not open a second window', async ({ context, admin, site }) => {
+    await configure(admin, site.origin);
+    await admin.getByTestId('nav-sites').click();
+    const grant = admin.getByRole('row').filter({ hasText: site.origin });
+    await grant.locator('input[type=checkbox]').last().check();
+    const page = await openSite(context, `${site.origin}/`);
+    const approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    const result = page.evaluate(() => new (window as unknown as Win).XDevBrowserPrint().print({
+      documentType: 'PRESCRIPTION', format: 'HTML', data: '<h1>single dispatch</h1>',
+    }));
+    await (await approval).getByTestId('approve-allow').click();
+    const printWindow = await context.waitForEvent('page', (p) => p.url().includes('print.html'));
+    const cdp = await context.newCDPSession(printWindow);
+    await cdp.send('ServiceWorker.enable');
+    await cdp.send('ServiceWorker.stopAllWorkers');
+    expect(await result).toMatchObject({ state: 'UNKNOWN', outcome: 'PRINT_DIALOG_CLOSED' });
+    await expect.poll(() => context.pages().filter((p) => p.url().includes('print.html')).length).toBe(1);
+  });
+
   test('HTML job opens the print window and ends UNKNOWN/PRINT_DIALOG_CLOSED', async ({ context, admin, site }) => {
     await configure(admin, site.origin);
     const page = await openSite(context, `${site.origin}/`);

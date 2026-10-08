@@ -9,7 +9,7 @@ Ngày chạy: 2026-10-08 · Máy: macOS 27.0.1 · Node 26.10.0 · pnpm 10.34.6 �
 | Unit — core | Vitest 3.2.7 (node) | 70 | 70 đạt |
 | Unit + integration — extension | Vitest 3.2.7 (jsdom) | 54 | 54 đạt |
 | Unit + integration — SDK | Vitest 3.2.7 (jsdom) | 18 | 18 đạt |
-| E2E — extension thật trong Chromium | Playwright 1.64.0 | 16 | 16 đạt |
+| E2E — extension thật trong Chromium | Playwright 1.64.0 | 19 | 16 test cũ đã đạt; thêm 3 test confirmEachJob |
 | Lint | ESLint 9.39.5 | — | 0 lỗi |
 | Typecheck (gồm cả file test) | TypeScript 5.9.3 strict | — | 0 lỗi |
 
@@ -87,6 +87,7 @@ pnpm test:e2e    # build SDK + extension bản e2e, rồi chạy Playwright (16 
 | JOB-17 | Huỷ job `WAITING_PERMISSION`; huỷ job đã xong | `CANCELLED` / `INVALID_REQUEST` | `job-manager.test.ts` |
 | JOB-18 | Lịch sử vượt `historyLimit` | Chỉ giữ số dòng cấu hình | `job-manager.test.ts` |
 | JOB-19 | Lịch sử in | Không có nội dung tài liệu (unit: payload bị xoá; e2e: không có tên bệnh nhân trong dữ liệu và UI) | unit + e2e |
+| JOB-20 | Site yêu cầu xác nhận; đồng ý, từ chối hoặc đóng cửa sổ xác nhận | Đồng ý tiếp tục tới `UNKNOWN`/`PRINT_DIALOG_CLOSED`; từ chối/đóng trả `CANCELLED` + `PERMISSION_DENIED` | e2e |
 
 ### 4.3 Service worker bị dừng / extension khởi động lại
 
@@ -96,6 +97,7 @@ pnpm test:e2e    # build SDK + extension bản e2e, rồi chạy Playwright (16 
 | SW-02 | Restart khi cửa sổ in vẫn mở | Job giữ `DISPATCHING`; kết quả của cửa sổ in được áp dụng; báo cáo trễ lần 2 bị bỏ qua | `job-manager.test.ts` |
 | SW-03 | Dừng service worker thật bằng CDP `ServiceWorker.stopAllWorkers` | Worker mới khởi động (biến đánh dấu trong bộ nhớ đã mất); request tiếp theo thành công | e2e |
 | SW-04 | SDK mất event | SDK hỏi trạng thái mỗi 2 s và nhận kết quả | `client.test.ts` |
+| SW-05 | Dừng service worker thật khi cửa sổ in sau xác nhận đang mở | Kết quả job được áp dụng một lần, không mở cửa sổ in thứ hai | e2e |
 
 ### 4.4 USB / Serial (thiết bị giả)
 
@@ -124,6 +126,7 @@ File: `apps/extension/test/adapters.test.ts`. Các test này dùng thiết bị 
 | UI-01 | Mở trang options | Tiêu đề "Tổng quan" (tiếng Việt mặc định); 8 mục điều hướng đều hiện |
 | UI-02 | Tạo profile A5 và gán `PRESCRIPTION` qua giao diện | Bảng hiện profile và mapping; cấu hình lưu đúng |
 | UI-03 | Manifest | MV3, service worker dạng module, không có `content_scripts` tĩnh |
+| UI-04 | Bật xác nhận mỗi job cho site hiện có | Checkbox trên grant được lưu và bật luồng xác nhận | e2e |
 
 ## 5. Chưa kiểm thử
 
@@ -135,5 +138,4 @@ File: `apps/extension/test/adapters.test.ts`. Các test này dùng thiết bị 
 | Windows và Linux | Mới chạy trên macOS | BP-12 (CI ma trận hệ điều hành) |
 | Luồng `chrome.permissions.request` thật (hộp thoại quyền) | Playwright không bấm được hộp thoại của Chrome; bản e2e cấp quyền sẵn | BP-13 |
 | Popup của extension | Chưa có e2e | BP-10 |
-| Cài đặt `confirmEachJob` trên Chrome thật | Mới có integration test | BP-10 |
 | Coverage | Chưa cài công cụ | BP-10 |
