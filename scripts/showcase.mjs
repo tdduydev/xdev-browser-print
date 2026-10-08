@@ -5,7 +5,8 @@
 //   pnpm showcase [path/to/app/dist]          (or SHOWCASE_APP_DIR=path/to/app/dist pnpm showcase)
 // Without a path it uses examples/react-demo/dist (the demo built against the workspace SDK).
 // The app must be built from examples/react-demo/src (it relies on the same data-testid hooks).
-// Output: docs/images/showcase/*.png (override with SHOWCASE_OUT). Exits non-zero on any failed check.
+// Output: test-results/showcase/*.png, ignored by git, so a check run never overwrites the README images.
+// To refresh those: SHOWCASE_OUT=docs/images/showcase pnpm showcase <styled app dist>. Exits non-zero on any failed check.
 //
 // Only demo data is used: a fake clinic ("Phòng khám Demo") and a fake patient.
 // Lives in scripts/, not tests/e2e/, so Playwright test discovery never picks it up.
@@ -18,7 +19,7 @@ import { chromium, expect as baseExpect } from '@playwright/test';
 const ROOT = join(import.meta.dirname, '..');
 const EXTENSION_DIR = join(ROOT, 'apps/extension/dist-e2e');
 const APP_DIR = resolve(process.argv[2] ?? process.env.SHOWCASE_APP_DIR ?? join(ROOT, 'examples/react-demo/dist'));
-const OUT = resolve(process.env.SHOWCASE_OUT ?? join(ROOT, 'docs/images/showcase'));
+const OUT = resolve(process.env.SHOWCASE_OUT ?? join(ROOT, 'test-results/showcase'));
 const VIEWPORT = { width: 1280, height: 800 };
 const TIMEOUT = 15_000;
 const expect = baseExpect.configure({ timeout: TIMEOUT });
