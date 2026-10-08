@@ -1,8 +1,19 @@
 name: Release
 
 on:
+  # A hand-pushed tag still works; release-please calls this workflow after merging its Release PR,
+  # because tags it creates with GITHUB_TOKEN do not trigger other workflows.
   push:
     tags: ['v*.*.*']
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag, e.g. v0.2.0
+        required: true
+        type: string
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 # Each job asks for what it needs; outward steps run in protected environments.
 permissions:
@@ -19,6 +30,8 @@ jobs:
       dist_tag: ${{ steps.sdk.outputs.dist_tag }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ env.TAG }}
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
@@ -28,14 +41,14 @@ jobs:
       # Fails fast, before the slow test steps, when someone tags the wrong version.
       - name: Tag must match SDK and extension versions
         run: |
-          node --input-type=module -e "import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs'; const version = JSON.parse(readFileSync('packages/browser-print-sdk/package.json')).version; assert.equal(version, JSON.parse(readFileSync('apps/extension/package.json')).version); assert.equal(process.env.GITHUB_REF_NAME, 'v' + version);"
+          node --input-type=module -e "import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs'; const version = JSON.parse(readFileSync('packages/browser-print-sdk/package.json')).version; assert.equal(version, JSON.parse(readFileSync('apps/extension/package.json')).version); assert.equal(process.env.TAG, 'v' + version);"
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - run: pnpm build
-      - run: pnpm check:sdk-package "$GITHUB_REF_NAME"
+      - run: pnpm check:sdk-package "$TAG"
       # pnpm pack (not npm) rewrites workspace:* ranges; the npm job publishes this exact tested tarball.
       - run: pnpm --filter @xdev/browser-print pack --pack-destination "$GITHUB_WORKSPACE/release-npm"
       - name: Decide whether the SDK goes to npm
@@ -48,7 +61,7 @@ jobs:
             echo "::notice::SDK license not approved (license=$license, LICENSE file required) - npm publish skipped"
             echo "npm_ready=false" >> "$GITHUB_OUTPUT"
           fi
-          case "$GITHUB_REF_NAME" in
+          case "$TAG" in
             *-*) echo "dist_tag=next" >> "$GITHUB_OUTPUT" ;;
             *) echo "dist_tag=latest" >> "$GITHUB_OUTPUT" ;;
           esac
@@ -66,9 +79,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          prerelease=""
-          case "$GITHUB_REF_NAME" in *-*) prerelease="--prerelease" ;; esac
-          gh release create "$GITHUB_REF_NAME" release/*.zip release/*.sha256 release-npm/*.tgz --title "$GITHUB_REF_NAME" --generate-notes --verify-tag $prerelease
+          # release-please has already created the release (with its changelog) when it called us.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/*.zip release/*.sha256 release-npm/*.tgz --clobber
+          else
+            prerelease=""
+            case "$TAG" in *-*) prerelease="--prerelease" ;; esac
+            gh release create "$TAG" release/*.zip release/*.sha256 release-npm/*.tgz --title "$TAG" --generate-notes --verify-tag $prerelease
+          fi
 
   chrome-web-store:
     name: Upload to Chrome Web Store
@@ -81,6 +99,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: extension-zip
@@ -103,7 +123,7 @@ jobs:
           CWS_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
           CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
           CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
-        run: node scripts/publish-cws.mjs "release/xdev-browser-print-${GITHUB_REF_NAME#v}.zip"
+        run: node scripts/publish-cws.mjs "release/xdev-browser-print-${TAG#v}.zip"
 
   npm-publish:
     name: Publish SDK to npm
