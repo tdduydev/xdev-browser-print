@@ -1,4 +1,4 @@
-import type { PrintOptions } from '@xdev/browser-print/react';
+import type { PrintOptions } from '@tdduydev/browser-print/react';
 
 export interface DemoDocument {
   id: string;

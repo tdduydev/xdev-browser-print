@@ -126,7 +126,7 @@ Kết luận (nâng lên Verified on Physical Printer? có/không):
 
 ## Phụ lục A — helper console
 
-SDK chưa được phát hành, nên các case nói chuyện với extension bằng giao thức trang (`docs/vi/API.md`, mục "Protocol"). Dán vào console DevTools của một trang trên website đã cho phép. Nếu website của bạn đã đóng gói `@xdev/browser-print`, lệnh SDK tương đương ghi trong comment.
+SDK chưa được phát hành, nên các case nói chuyện với extension bằng giao thức trang (`docs/vi/API.md`, mục "Protocol"). Dán vào console DevTools của một trang trên website đã cho phép. Nếu website của bạn đã đóng gói `@tdduydev/browser-print`, lệnh SDK tương đương ghi trong comment.
 
 ```js
 // Logs job/status events once.

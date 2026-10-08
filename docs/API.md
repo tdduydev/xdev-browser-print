@@ -1,11 +1,11 @@
-# SDK `@xdev/browser-print` — API
+# SDK `@tdduydev/browser-print` — API
 
 Vietnamese version: [vi/API.md](vi/API.md)
 
 ## Install
 
 ```bash
-pnpm add @xdev/browser-print
+pnpm add @tdduydev/browser-print
 ```
 
 ESM + CJS, fully typed, no backend dependency. `react` is an optional peer dependency (≥ 18, tested with React 19).
@@ -13,7 +13,7 @@ ESM + CJS, fully typed, no backend dependency. `react` is an optional peer depen
 ## Create and connect
 
 ```ts
-import { XDevBrowserPrint } from '@xdev/browser-print';
+import { XDevBrowserPrint } from '@tdduydev/browser-print';
 
 const printer = new XDevBrowserPrint({
   extensionId: 'EXTENSION_ID',   // optional: only talk to this extension build
@@ -86,7 +86,7 @@ const job = await printer.print({
 ## React
 
 ```tsx
-import { useBrowserPrint } from '@xdev/browser-print/react';
+import { useBrowserPrint } from '@tdduydev/browser-print/react';
 
 function PrintButton({ pdf }: { pdf: Blob }) {
   const { state, connect, print, error } = useBrowserPrint({ appName: 'HIS' });

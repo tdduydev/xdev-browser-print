@@ -2,7 +2,7 @@
 
 Tiếng Việt: [README.vi.md](README.vi.md)
 
-A small Vite + React app that prints through the extension with the `useBrowserPrint` hook from `@xdev/browser-print/react`. Use it as a working integration example; the full SDK reference is [docs/API.md](../../docs/API.md).
+A small Vite + React app that prints through the extension with the `useBrowserPrint` hook from `@tdduydev/browser-print/react`. Use it as a working integration example; the full SDK reference is [docs/API.md](../../docs/API.md).
 
 ## What it shows
 
@@ -27,7 +27,7 @@ pnpm build                              # builds apps/extension/dist and package
 pnpm --filter @xdev/react-demo dev
 ```
 
-The demo imports the built SDK (`packages/browser-print-sdk/dist`). Rebuild it with `pnpm --filter @xdev/browser-print build` after changing the SDK.
+The demo imports the built SDK (`packages/browser-print-sdk/dist`). Rebuild it with `pnpm --filter @tdduydev/browser-print build` after changing the SDK.
 
 ## Set up the extension
 

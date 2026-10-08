@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useBrowserPrint } from '@xdev/browser-print/react';
+import { useBrowserPrint } from '@tdduydev/browser-print/react';
 import { DOCUMENTS } from './documents';
 
 export function App() {

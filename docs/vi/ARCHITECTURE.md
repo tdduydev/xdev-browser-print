@@ -33,7 +33,7 @@ Website ReactJS gửi lệnh in qua SDK. Extension chọn máy in theo loại ch
 
 ```
 ReactJS app
-  └─ @xdev/browser-print (SDK)               window.postMessage (cùng origin)
+  └─ @tdduydev/browser-print (SDK)               window.postMessage (cùng origin)
        └─ Content script (relay, không có quyền)  chrome.runtime port "xdbp-bridge"
             └─ Service worker
                  ├─ PageApi        xác thực origin + scope, chống replay

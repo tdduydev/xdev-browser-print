@@ -78,7 +78,7 @@ importers:
 
   examples/react-demo:
     dependencies:
-      '@xdev/browser-print':
+      '@tdduydev/browser-print':
         specifier: workspace:*
         version: link:../../packages/browser-print-sdk
       react:

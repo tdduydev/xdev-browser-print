@@ -5,8 +5,8 @@
     // CI typechecks before anything is built; point the SDK at its sources instead of dist/*.d.ts.
     "baseUrl": ".",
     "paths": {
-      "@xdev/browser-print": ["../../packages/browser-print-sdk/src/index.ts"],
-      "@xdev/browser-print/react": ["../../packages/browser-print-sdk/src/react.ts"],
+      "@tdduydev/browser-print": ["../../packages/browser-print-sdk/src/index.ts"],
+      "@tdduydev/browser-print/react": ["../../packages/browser-print-sdk/src/react.ts"],
       "@xdev/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@xdev/core": ["../../packages/core/src/index.ts"]
     }

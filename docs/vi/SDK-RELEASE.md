@@ -1,46 +1,53 @@
 # Phát hành SDK
 
-Giữ tên package `@xdev/browser-print`. Workflow chuẩn bị phát hành public lên
-npmjs sau GitHub Release, độc lập với job Chrome Web Store. **Chưa chốt registry
-public và license.** Khi SDK còn `UNLICENSED` hoặc chưa có file
-`packages/browser-print-sdk/LICENSE`, job `npm-publish` bị bỏ qua (không báo lỗi),
-nên tag vẫn phát hành extension. Không đổi license khi chưa được chủ sở hữu đồng ý. Nếu chọn GitHub Packages private, phải sửa registry,
-scope/xác thực và yêu cầu provenance trước khi bật phát hành.
+SDK được phát hành lên npmjs với tên `@tdduydev/browser-print`, license MIT
+(file `LICENSE`, có trong package). Extension và SDK dùng chung một version và
+một lần release.
 
-Trước lần phát hành public đầu tiên:
+## Cách một release được phát hành
 
-1. Xác nhận quyền sở hữu/phát hành scope npm `@xdev` của nhóm.
-2. Duyệt license SDK, cập nhật metadata và thêm văn bản license bao phủ cả code
-   core/shared-types đã gộp vào SDK.
-3. Xác nhận repo GitHub public, khớp chính xác `repository.url`. npm provenance
-   yêu cầu repo nguồn public.
-4. Tạo environment GitHub `npm` với required reviewers; thêm secret `NPM_TOKEN`
-   là granular token có quyền publish package/scope và bypass 2FA phù hợp.
-   Không commit thông tin xác thực.
-5. release-please giữ version của SDK, extension và root bằng nhau trong Release PR.
-   Muốn kiểm tra một version ở máy: cài bằng frozen lockfile, build rồi chạy
-   `pnpm check:sdk-package vX.Y.Z`.
-6. Sau review/merge, merge Release PR của release-please; PR này tạo tag `vX.Y.Z` và chạy release (push tag bằng tay vẫn được). Chỉ duyệt
-   environment npm sau khi xem release. Version npm không thể ghi đè; mỗi lần
-   đã publish phải dùng version mới cho lần tiếp theo.
-7. Xác nhận version và provenance trên npm; cài vào ứng dụng ngoài repo để kiểm
-   tra ESM, CommonJS, TypeScript và entry React tùy chọn.
+1. Merge PR có tiêu đề theo Conventional Commits vào `main`. release-please giữ
+   một Release PR chứa version tiếp theo và CHANGELOG.
+2. Merge Release PR. Việc này tạo tag `vX.Y.Z` và chạy `release.yml`: lint,
+   typecheck, unit test và e2e, build, `pnpm check:sdk-package`, rồi
+   `pnpm pack` SDK (đổi `workspace:*` thành version thật). File `.tgz` được đính
+   kèm vào GitHub Release.
+3. Job `npm-publish` chờ người duyệt trong environment `npm`, rồi phát hành đúng
+   tarball đó, không build lại.
 
-Cách workflow phát hành:
+Chi tiết:
 
-- Job `release` đóng gói SDK bằng `pnpm pack` (đổi `workspace:*` thành version
-  thật) sau khi qua lint, typecheck, unit test và e2e, rồi đính kèm `.tgz` vào
-  GitHub Release.
-- `npm-publish` tải đúng tarball đó và chạy
-  `npm publish <tgz> --provenance --access public`, không build lại.
-- Tag có hậu tố prerelease (`v1.2.0-beta.1`) phát hành với dist-tag `next` và
-  tạo GitHub prerelease; tag khác dùng `latest`.
-- Các action được ghim theo commit SHA.
+- **Không có npm token.** Job dùng npm trusted publishing (OIDC, npm ≥ 11.5.1),
+  npm tự thêm provenance. Trusted publisher trên npmjs.com là repo này, workflow
+  `release-please.yml` (workflow gọi `release.yml`), environment `npm`.
+- Version đã có trên npm thì được bỏ qua, không báo lỗi.
+- Tag có hậu tố prerelease (`v1.2.0-beta.1`) phát hành với dist-tag `next`; tag
+  khác dùng `latest`.
+- Job bị bỏ qua khi SDK còn `UNLICENSED` hoặc thiếu file `LICENSE`.
 
-CI build SDK và chạy `npm pack --dry-run` qua `pnpm check:sdk-package`, kiểm tra
-file exports, README, declaration không import workspace chưa publish, dependency
-và version SDK/extension/tag. Kiểm tra này không chứng minh quyền registry hay
-publish thành công. T10 chưa phát hành tag nào trong kiểm tra cục bộ.
+## Phát hành lần đầu (một lần)
 
-Tham khảo: [npm provenance](https://docs.npmjs.com/generating-provenance-statements/),
-[package public có scope](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages/).
+Trusted publishing được cấu hình trên package đã tồn tại, nên version đầu tiên
+do maintainer phát hành bằng tay từ máy của mình:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter @tdduydev/browser-print build
+pnpm --filter @tdduydev/browser-print pack --pack-destination release-npm
+npm publish release-npm/tdduydev-browser-print-*.tgz --access public
+```
+
+Sau đó trên npmjs.com → package → Settings → Trusted publishing, thêm GitHub
+Actions với owner `tdduydev`, repository `xdev-browser-print`, workflow
+`release-please.yml`, environment `npm`. Version trên npm không thể ghi đè: đã
+phát hành thì không dùng lại được.
+
+## Kiểm tra
+
+CI chạy `pnpm check:sdk-package` (npm pack dry-run): file exports, README,
+declaration không import workspace chưa publish, dependency và version
+SDK/extension/tag. Sau mỗi release, cài package vào một ứng dụng ngoài repo để
+kiểm tra ESM, CommonJS, TypeScript và entry `/react`.
+
+Tham khảo: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers),
+[provenance](https://docs.npmjs.com/generating-provenance-statements/).

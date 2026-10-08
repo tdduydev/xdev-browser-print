@@ -1,8 +1,8 @@
 {
-  "name": "@xdev/browser-print",
+  "name": "@tdduydev/browser-print",
   "version": "0.2.0",
   "description": "TypeScript SDK for web apps to print through the xDev Browser Print Chrome extension.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",
@@ -22,7 +22,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",
