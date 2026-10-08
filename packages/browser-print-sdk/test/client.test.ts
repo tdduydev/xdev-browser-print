@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { BRIDGE_CHANNEL } from '@xdev/shared-types';
-import { BrowserPrintTimeoutError, NotInstalledError, PermissionError, PrintJobError, UnsupportedCapabilityError, XDevBrowserPrint } from '../src';
+import { BrowserPrintTimeoutError, NotInstalledError, PermissionError, PrintJobError, SDK_VERSION, UnsupportedCapabilityError, XDevBrowserPrint } from '../src';
 import { FakeBridge, FakeWindow, NO_REPLY, ORIGIN, job } from './fake-bridge';
 
 const clients: XDevBrowserPrint[] = [];
@@ -28,7 +28,7 @@ describe('detection and connect', () => {
     const s = await c.connect();
     expect(s.scopes).toEqual(['read', 'print', 'configure']);
     expect(c.connected).toBe(true);
-    expect(bridge.requests[0]).toMatchObject({ method: 'connect', params: { appName: 'HIS', sdkVersion: '0.1.0' } });
+    expect(bridge.requests[0]).toMatchObject({ method: 'connect', params: { appName: 'HIS', sdkVersion: SDK_VERSION } });
   });
 
   it('ignores a different extension when pinned by extensionId', async () => {

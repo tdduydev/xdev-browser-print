@@ -34,7 +34,7 @@ do maintainer phát hành bằng tay từ máy của mình:
 pnpm install --frozen-lockfile
 pnpm --filter @tdduydev/browser-print build
 pnpm --filter @tdduydev/browser-print pack --pack-destination release-npm
-npm publish release-npm/tdduydev-browser-print-*.tgz --access public
+npm publish ./release-npm/tdduydev-browser-print-*.tgz --access public
 ```
 
 Sau đó trên npmjs.com → package → Settings → Trusted publishing, thêm GitHub

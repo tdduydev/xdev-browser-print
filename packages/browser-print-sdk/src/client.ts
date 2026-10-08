@@ -15,7 +15,8 @@ import { bytesToBase64, randomId } from '@xdev/core';
 import { BrowserPrintError, NotInstalledError, PrintJobError, UnsupportedCapabilityError } from './errors';
 import { PostMessageTransport } from './transport';
 
-export const SDK_VERSION = '0.1.0';
+// release-please rewrites the marked line on every release, keeping it equal to package.json.
+export const SDK_VERSION = '0.3.0'; // x-release-please-version
 
 export interface XDevBrowserPrintOptions {
   /** Pin to one extension build; others answering on the page are ignored. */

@@ -1,8 +1,16 @@
 # xDev Browser Print
 
 [![CI](https://github.com/tdduydev/xdev-browser-print/actions/workflows/ci.yml/badge.svg)](https://github.com/tdduydev/xdev-browser-print/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@tdduydev/browser-print.svg)](https://www.npmjs.com/package/@tdduydev/browser-print)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A Chrome Extension (Manifest V3) and TypeScript SDK that let ReactJS web apps print prescriptions, invoices and labels to printers configured per document type. No backend, native app or cloud print service.
+
+SDK on npm: [`@tdduydev/browser-print`](https://www.npmjs.com/package/@tdduydev/browser-print)
+
+```bash
+npm install @tdduydev/browser-print
+```
 
 Tiếng Việt: [docs/vi](docs/vi/ARCHITECTURE.md)
 
