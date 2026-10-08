@@ -1,0 +1,5 @@
+{
+  "extDescription": {
+    "message": "Print prescriptions, invoices and labels from web apps. Map document types to printers; print via Chrome, WebUSB or Web Serial."
+  }
+}

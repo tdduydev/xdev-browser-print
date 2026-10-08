@@ -1,0 +1,9 @@
+:root { color-scheme: light dark; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { margin: 0; background: Canvas; color: CanvasText; }
+.runner { display: grid; gap: 12px; justify-items: center; text-align: center; padding: 48px 24px; }
+h1 { font-size: 18px; margin: 0; }
+p { margin: 0; opacity: .75; max-width: 420px; }
+button { padding: 8px 16px; border-radius: 6px; border: 1px solid #8884; background: transparent; color: inherit; cursor: pointer; }
+/* The frame must be laid out (not display:none) or Chrome prints a blank page. */
+#stage { position: fixed; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.print-frame { width: 800px; height: 1100px; border: 0; }
