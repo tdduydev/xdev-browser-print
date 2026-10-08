@@ -118,6 +118,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
+          # This job has no pnpm; setup-node v5 would otherwise cache via packageManager and fail.
+          package-manager-cache: false
       - name: Upload and submit for review
         env:
           CWS_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
@@ -143,6 +145,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
+          # This job has no pnpm; setup-node v5 would otherwise cache via packageManager and fail.
+          package-manager-cache: false
       # Trusted publishing (OIDC) needs npm >= 11.5.1; no npm token is stored anywhere.
       - run: npm install -g npm@11.20.0
       - name: Skip versions already on npm
