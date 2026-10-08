@@ -25,7 +25,7 @@ pnpm exec playwright install chromium   # lần đầu
 pnpm lint
 pnpm typecheck
 pnpm test        # unit + integration (142 test)
-pnpm test:e2e    # build SDK + extension bản e2e, rồi chạy Playwright (16 test)
+pnpm test:e2e    # build SDK + extension bản e2e, rồi chạy Playwright (18 test)
 ```
 
 ## 3. Phạm vi các cấp test
@@ -125,6 +125,13 @@ File: `apps/extension/test/adapters.test.ts`. Các test này dùng thiết bị 
 | UI-02 | Tạo profile A5 và gán `PRESCRIPTION` qua giao diện | Bảng hiện profile và mapping; cấu hình lưu đúng |
 | UI-03 | Manifest | MV3, service worker dạng module, không có `content_scripts` tĩnh |
 
+### 4.6 Popup extension (e2e)
+
+| ID | Test case | Kết quả mong đợi |
+|---|---|---|
+| POP-01 | Mở popup trên localhost chưa ghép nối, ghép nối rồi thu hồi | Hiện nút ghép nối; grant hiển thị `read` + `print`; thu hồi trở về trạng thái chưa ghép nối |
+| POP-02 | Mở popup trên `chrome://settings` | Hiện `popup.unsupportedPage`, không thể ghép nối |
+
 ## 5. Chưa kiểm thử
 
 | Hạng mục | Lý do | Task |
@@ -134,6 +141,5 @@ File: `apps/extension/test/adapters.test.ts`. Các test này dùng thiết bị 
 | WebUSB/Web Serial với máy in thật (K80, K58, tem) | Không có thiết bị trong môi trường CI | BP-13 |
 | Windows và Linux | Mới chạy trên macOS | BP-12 (CI ma trận hệ điều hành) |
 | Luồng `chrome.permissions.request` thật (hộp thoại quyền) | Playwright không bấm được hộp thoại của Chrome; bản e2e cấp quyền sẵn | BP-13 |
-| Popup của extension | Chưa có e2e | BP-10 |
 | Cài đặt `confirmEachJob` trên Chrome thật | Mới có integration test | BP-10 |
 | Coverage | Chưa cài công cụ | BP-10 |

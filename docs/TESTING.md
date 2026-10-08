@@ -29,7 +29,7 @@ pnpm exec playwright install chromium   # first time
 pnpm lint
 pnpm typecheck
 pnpm test        # unit + integration (142 tests)
-pnpm test:e2e    # builds the SDK and the e2e extension, then runs Playwright (16 tests)
+pnpm test:e2e    # builds the SDK and the e2e extension, then runs Playwright (18 tests)
 ```
 
 ## 3. Scope per level
@@ -129,6 +129,13 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | UI-02 | Create an A5 profile and map `PRESCRIPTION` through the UI | Tables show the profile and mapping; configuration saved |
 | UI-03 | Manifest | MV3, module service worker, no static `content_scripts` |
 
+### 4.6 Extension popup (e2e)
+
+| ID | Case | Expected |
+|---|---|---|
+| POP-01 | Open popup on unpaired localhost, pair it, then revoke it | Pair button appears; grant shows `read` + `print`; revoke returns to unpaired state |
+| POP-02 | Open popup on `chrome://settings` | `popup.unsupportedPage` appears and pairing is unavailable |
+
 ## 5. Not tested yet
 
 | Item | Reason | Task |
@@ -138,6 +145,5 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | WebUSB/Web Serial with real printers (K80, K58, label) | No devices in CI | BP-13 |
 | Windows e2e | Unit tests pass on Windows in CI; browser e2e runs on Linux (CI) and macOS (local) only | BP-12 |
 | Real `chrome.permissions.request` prompt | Playwright cannot click Chrome's prompt; the e2e build pre-grants localhost | BP-13 |
-| Extension popup | No e2e yet | BP-10 |
 | `confirmEachJob` in real Chrome | Integration tests only | BP-10 |
 | Coverage | Tool not installed | BP-10 |

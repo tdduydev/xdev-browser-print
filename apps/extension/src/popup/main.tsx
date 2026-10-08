@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { normalizeOrigin } from '@xdev/core';
 import { allowSite } from '../lib/site-permission';
+import { callBackground } from '../lib/messages';
 import { t } from '../ui/i18n';
 import { errorText, useConfig } from '../ui/useBackground';
 import '../ui/styles.css';
@@ -43,7 +44,10 @@ function Popup() {
           <>
             <p><code>{pairable}</code></p>
             {grant ? (
-              <span className="badge ok">{t('popup.allowed')} · {grant.scopes.join(', ')}</span>
+              <>
+                <span className="badge ok">{t('popup.allowed')} · {grant.scopes.join(', ')}</span>
+                <p><button className="danger" onClick={() => void callBackground('sites.remove', { origin: pairable! })}>{t('sites.remove')}</button></p>
+              </>
             ) : (
               <>
                 <p><span className="badge warn">{t('popup.notAllowed')}</span></p>
