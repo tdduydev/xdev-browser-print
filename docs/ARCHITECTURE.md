@@ -33,7 +33,7 @@ A ReactJS website sends print jobs through the SDK. The extension picks the prin
 
 ```
 ReactJS app
-  └─ @xdev/browser-print (SDK)                window.postMessage (same origin)
+  └─ @tdduydev/browser-print (SDK)                window.postMessage (same origin)
        └─ Content script (relay, no privileges)  chrome.runtime port "xdbp-bridge"
             └─ Service worker
                  ├─ PageApi        origin + scope checks, replay protection

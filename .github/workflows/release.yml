@@ -50,7 +50,7 @@ jobs:
       - run: pnpm build
       - run: pnpm check:sdk-package "$TAG"
       # pnpm pack (not npm) rewrites workspace:* ranges; the npm job publishes this exact tested tarball.
-      - run: pnpm --filter @xdev/browser-print pack --pack-destination "$GITHUB_WORKSPACE/release-npm"
+      - run: pnpm --filter @tdduydev/browser-print pack --pack-destination "$GITHUB_WORKSPACE/release-npm"
       - name: Decide whether the SDK goes to npm
         id: sdk
         run: |
@@ -143,9 +143,19 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
+      # Trusted publishing (OIDC) needs npm >= 11.5.1; no npm token is stored anywhere.
+      - run: npm install -g npm@11.20.0
+      - name: Skip versions already on npm
+        id: published
+        run: |
+          name=$(tar -xzOf release-npm/*.tgz package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).name")
+          version=$(tar -xzOf release-npm/*.tgz package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version")
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "::notice::$name@$version is already on npm - skipping"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Publish with provenance
+        if: steps.published.outputs.exists != 'true'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           DIST_TAG: ${{ needs.release.outputs.dist_tag }}
-        run: npm publish release-npm/*.tgz --provenance --access public --tag "$DIST_TAG"
+        run: npm publish release-npm/*.tgz --access public --tag "$DIST_TAG"

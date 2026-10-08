@@ -2,7 +2,7 @@
 
 English: [README.md](README.md)
 
-Ứng dụng Vite + React nhỏ, in qua extension bằng hook `useBrowserPrint` của `@xdev/browser-print/react`. Dùng làm ví dụ tích hợp chạy được; tài liệu SDK đầy đủ ở [docs/vi/API.md](../../docs/vi/API.md) (bản tiếng Anh: [docs/API.md](../../docs/API.md)).
+Ứng dụng Vite + React nhỏ, in qua extension bằng hook `useBrowserPrint` của `@tdduydev/browser-print/react`. Dùng làm ví dụ tích hợp chạy được; tài liệu SDK đầy đủ ở [docs/vi/API.md](../../docs/vi/API.md) (bản tiếng Anh: [docs/API.md](../../docs/API.md)).
 
 ## Nội dung
 
@@ -27,7 +27,7 @@ pnpm build                              # build apps/extension/dist và packages
 pnpm --filter @xdev/react-demo dev
 ```
 
-Demo import SDK đã build (`packages/browser-print-sdk/dist`). Sau khi sửa SDK, build lại bằng `pnpm --filter @xdev/browser-print build`.
+Demo import SDK đã build (`packages/browser-print-sdk/dist`). Sau khi sửa SDK, build lại bằng `pnpm --filter @tdduydev/browser-print build`.
 
 ## Cấu hình extension
 

@@ -1,9 +1,9 @@
-# SDK `@xdev/browser-print` — API
+# SDK `@tdduydev/browser-print` — API
 
 ## Cài đặt
 
 ```bash
-pnpm add @xdev/browser-print
+pnpm add @tdduydev/browser-print
 ```
 
 Gói ESM + CJS, có type đầy đủ, không phụ thuộc backend. `react` là peer dependency tuỳ chọn (≥ 18, đã test với React 19).
@@ -11,7 +11,7 @@ Gói ESM + CJS, có type đầy đủ, không phụ thuộc backend. `react` là
 ## Khởi tạo và kết nối
 
 ```ts
-import { XDevBrowserPrint } from '@xdev/browser-print';
+import { XDevBrowserPrint } from '@tdduydev/browser-print';
 
 const printer = new XDevBrowserPrint({
   extensionId: 'EXTENSION_ID',   // tuỳ chọn: chỉ nói chuyện với bản extension này
@@ -84,7 +84,7 @@ const job = await printer.print({
 ## React
 
 ```tsx
-import { useBrowserPrint } from '@xdev/browser-print/react';
+import { useBrowserPrint } from '@tdduydev/browser-print/react';
 
 function PrintButton({ pdf }: { pdf: Blob }) {
   const { state, connect, print, error } = useBrowserPrint({ appName: 'HIS' });

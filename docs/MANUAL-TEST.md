@@ -126,7 +126,7 @@ Verdict (promote to Verified on Physical Printer? yes/no):
 
 ## Appendix A — console helper
 
-The SDK is not published yet, so the cases talk to the extension with the page protocol (`docs/API.md`, "Protocol"). Paste into the DevTools console of a page on the allowed site. If your site bundles `@xdev/browser-print`, the SDK equivalent is shown in comments.
+The SDK is not published yet, so the cases talk to the extension with the page protocol (`docs/API.md`, "Protocol"). Paste into the DevTools console of a page on the allowed site. If your site bundles `@tdduydev/browser-print`, the SDK equivalent is shown in comments.
 
 ```js
 // Logs job/status events once.
