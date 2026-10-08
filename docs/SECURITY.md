@@ -1,62 +1,64 @@
-# Bảo mật — xDev Browser Print
+# Security — xDev Browser Print
 
-## 1. Mô hình tin cậy
+Vietnamese version: [vi/SECURITY.md](vi/SECURITY.md)
 
-| Thành phần | Mức tin cậy | Lý do |
+## 1. Trust model
+
+| Component | Trust | Reason |
 |---|---|---|
-| Service worker, trang extension | Tin cậy | Mã của extension, chạy dưới CSP của Manifest V3. |
-| Origin đã được người dùng cho phép | Tin cậy giới hạn theo scope | Mọi script trên origin đó dùng được SDK. Ranh giới tin cậy là **origin**, không phải từng script. |
-| Content script | Không giữ quyền | Chỉ chuyển message. Service worker kiểm tra lại mọi request. |
-| Website khác, iframe, cửa sổ khác | Không tin cậy | Không có content script, hoặc bị chặn ở bước kiểm tra origin. |
-| HTML/PDF do site gửi | Không tin cậy | Hiển thị sau khi làm sạch, trong iframe sandbox. |
+| Service worker, extension pages | Trusted | Extension code, under the Manifest V3 CSP. |
+| Origins the user allowed | Trusted within their scopes | Any script on that origin can use the SDK. The trust boundary is the **origin**, not individual scripts. |
+| Content script | No privileges | Only relays messages. The service worker re-checks every request. |
+| Other websites, iframes, other windows | Untrusted | No content script, or rejected by the origin check. |
+| HTML/PDF sent by a site | Untrusted | Rendered after sanitization, in a sandboxed iframe. |
 
-## 2. Các lớp kiểm soát
+## 2. Controls
 
-| # | Kiểm soát | Nơi cài đặt | Test |
+| # | Control | Implemented in | Test |
 |---|---|---|---|
-| S1 | Origin chính xác. Không chấp nhận wildcard, path, query, credentials. Chỉ `https:`. `http://localhost` và `http://127.0.0.1` chỉ khi bật cài đặt `allowLocalhost`. | `core/src/origin.ts` | `origin.test.ts` |
-| S2 | Content script chỉ được đăng ký cho host người dùng cho phép. Manifest không có `content_scripts`. | `background/sites.ts` | e2e "never allowed gets no bridge" |
-| S3 | Origin lấy từ `port.sender.origin` do Chrome cung cấp. Không đọc origin từ nội dung message. | `background/index.ts` | e2e "another port on an allowed host" |
-| S4 | Bridge chỉ nhận port từ content script của chính extension, ở frame chính (`frameId === 0`) của một tab. | `background/index.ts` | Review code |
-| S5 | Content script chỉ nhận message có `event.source === window` và `event.origin === location.origin`. Content script chỉ gửi trả về origin của trang. | `content/index.ts` | SDK test "ignores messages from other origins" |
-| S6 | Scope `read`, `print`, `configure` theo từng method (`METHOD_SCOPES`). | `background/api.ts` | `page-api.test.ts`, e2e "scopes are enforced" |
-| S7 | Thêm scope cần người dùng duyệt trong cửa sổ `approve.html`. Hết hạn sau 2 phút. Mỗi origin chỉ có một cửa sổ duyệt cùng lúc. | `background/approvals.ts` | e2e approve / deny |
-| S8 | Cài đặt `allowSiteConfigure = false` chặn mọi thay đổi mapping từ site, kể cả khi site có scope `configure`. | `background/api.ts` | `page-api.test.ts` |
-| S9 | Chống replay: `requestId` không được dùng lại. `sentAt` lệch quá 60 s bị từ chối. | `core/src/replay.ts` | `jobs-and-guards.test.ts`, `page-api.test.ts` |
-| S10 | Chống in trùng: `idempotencyKey` theo từng origin. Job trùng trả job cũ, không in lại. | `printing/job-manager.ts` | unit + e2e |
-| S11 | Rate limit theo origin. Mặc định 20 job / 60 s. | `core/src/rate-limit.ts` | unit + e2e |
-| S12 | Giới hạn kích thước. Mặc định 15 MB sau giải mã. Content script chặn message > 70 MB ký tự. | `core/src/validation.ts`, `content/index.ts` | unit + e2e |
-| S13 | Dữ liệu gắn nhãn PDF PHẢI bắt đầu bằng `%PDF`. | `core/src/validation.ts` | e2e "invalid documents" |
-| S14 | HTML của site: DOMPurify bỏ `script`, `iframe`, `object`, `embed`, `form`, `input`, `base`, `meta`, `link`, event handler, URL `javascript:`. Sau đó hiển thị trong iframe `sandbox="allow-same-origin allow-modals"`. | `print/render.ts` | `render.test.ts`, e2e HTML job |
-| S15 | Mỗi site chỉ thấy job của chính site đó. | `background/api.ts` | `page-api.test.ts` |
-| S16 | Lỗi không rõ nguồn trả về thông báo chung, không kèm message gốc (message gốc có thể chứa dữ liệu bệnh nhân). | `core/src/errors.ts` | `page-api.test.ts` |
-| S17 | Lịch sử in chỉ lưu thông tin job. Payload bị xoá khi job kết thúc. | `printing/job-manager.ts` | unit + e2e "metadata only" |
-| S18 | `getPrinters()` không trả serial number, vendorId, cấu hình cổng. | `background/api.ts` | `page-api.test.ts` |
-| S19 | Site có thể bật "Hỏi xác nhận mỗi lần in". Job chờ ở `WAITING_PERMISSION` tới khi người dùng duyệt. | `printing/job-manager.ts` | `job-manager.test.ts` |
-| S20 | Message nội bộ (trang options, popup, cửa sổ in) chỉ nhận khi `sender.url` thuộc extension. Content script có cùng extension id nhưng URL là trang web, nên bị chặn. | `background/index.ts` | Review code |
+| S1 | Exact origins only. No wildcards, paths, queries or credentials. `https:` only. `http://localhost` and `http://127.0.0.1` only when the `allowLocalhost` setting is on. | `core/src/origin.ts` | `origin.test.ts` |
+| S2 | Content scripts are registered only for hosts the user allowed. The manifest has no `content_scripts`. | `background/sites.ts` | e2e "never allowed gets no bridge" |
+| S3 | The origin comes from `port.sender.origin`, set by Chrome. The message body is never trusted for the origin. | `background/index.ts` | e2e "another port on an allowed host" |
+| S4 | The bridge accepts ports only from this extension's content script, in the top frame (`frameId === 0`) of a tab. | `background/index.ts` | Code review |
+| S5 | The content script accepts only messages with `event.source === window` and `event.origin === location.origin`, and posts replies only to the page's own origin. | `content/index.ts` | SDK test "ignores messages from other origins" |
+| S6 | Scopes `read`, `print`, `configure` per method (`METHOD_SCOPES`). | `background/api.ts` | `page-api.test.ts`, e2e "scopes are enforced" |
+| S7 | Extra scopes need user approval in `approve.html`. Requests expire after 2 minutes. One approval window per origin at a time. | `background/approvals.ts` | e2e approve / deny |
+| S8 | Setting `allowSiteConfigure = false` blocks all mapping changes from sites, even with the `configure` scope. | `background/api.ts` | `page-api.test.ts` |
+| S9 | Replay protection: `requestId` cannot be reused; `sentAt` more than 60 s off is rejected. | `core/src/replay.ts` | `jobs-and-guards.test.ts`, `page-api.test.ts` |
+| S10 | Duplicate protection: `idempotencyKey` per origin. A duplicate returns the existing job and does not print again. | `printing/job-manager.ts` | unit + e2e |
+| S11 | Per-origin rate limit. Default 20 jobs / 60 s. | `core/src/rate-limit.ts` | unit + e2e |
+| S12 | Size limit. Default 15 MB decoded. The content script drops messages over 70 M characters. | `core/src/validation.ts`, `content/index.ts` | unit + e2e |
+| S13 | Data labelled PDF MUST start with `%PDF`. | `core/src/validation.ts` | e2e "invalid documents" |
+| S14 | Site HTML: DOMPurify removes `script`, `iframe`, `object`, `embed`, `form`, `input`, `base`, `meta`, `link`, event handlers and `javascript:` URLs. The result is shown in an iframe with `sandbox="allow-same-origin allow-modals"`. | `print/render.ts` | `render.test.ts`, e2e HTML job |
+| S15 | A site only sees its own jobs. | `background/api.ts` | `page-api.test.ts` |
+| S16 | Unexpected errors return a generic message, never the original message (which could contain patient data). | `core/src/errors.ts` | `page-api.test.ts` |
+| S17 | Print history stores metadata only. Payloads are deleted when the job ends. | `printing/job-manager.ts` | unit + e2e "metadata only" |
+| S18 | `getPrinters()` never returns serial numbers, vendor ids or port settings. | `background/api.ts` | `page-api.test.ts` |
+| S19 | A site can require confirmation for every job. The job waits in `WAITING_PERMISSION` until the user approves. | `printing/job-manager.ts` | `job-manager.test.ts` |
+| S20 | Internal messages (options, popup, print window) are accepted only when `sender.url` belongs to the extension. Content scripts share the extension id but have a web URL, so they are rejected. | `background/index.ts` | Code review |
 
-## 3. Manifest V3 và CSP
+## 3. Manifest V3 and CSP
 
 - `content_security_policy.extension_pages`: `script-src 'self'; object-src 'self'; base-uri 'none'; form-action 'none'`.
-- Không dùng `eval`, `new Function`, script từ CDN. ESLint chặn `no-eval`, `no-implied-eval`, `no-new-func`.
-- Toàn bộ mã được bundle trong gói phát hành.
+- No `eval`, `new Function` or CDN scripts. ESLint enforces `no-eval`, `no-implied-eval`, `no-new-func`.
+- All code is bundled in the release package.
 
-## 4. Quyền của extension
+## 4. Extension permissions
 
-| Quyền | Dùng cho |
+| Permission | Used for |
 |---|---|
-| `storage` | Lưu cấu hình và grant trong `chrome.storage.local`. |
-| `scripting` | Đăng ký content script cho từng origin được phép. |
-| `activeTab` | Popup đọc URL của tab hiện tại để đề xuất "Cho phép website này". |
-| `optional_host_permissions`: `https://*/*`, `http://localhost/*`, `http://127.0.0.1/*` | Chỉ xin quyền cho **một host** khi người dùng thêm site. Không có quyền host nào lúc cài đặt. |
+| `storage` | Configuration and grants in `chrome.storage.local`. |
+| `scripting` | Registering the content script for each allowed origin. |
+| `activeTab` | The popup reads the current tab's URL to offer "Allow this website". |
+| `optional_host_permissions`: `https://*/*`, `http://localhost/*`, `http://127.0.0.1/*` | Requested for **one host** when the user adds a site. No host access at install time. |
 
-Bản build e2e (`XDBP_E2E=1`, thư mục `dist-e2e`) thêm `host_permissions: ["http://localhost/*"]` để test không cần hộp thoại quyền. Bản build này KHÔNG ĐƯỢC phát hành.
+The e2e build (`XDBP_E2E=1`, folder `dist-e2e`) adds `host_permissions: ["http://localhost/*"]` so tests need no permission prompt. This build MUST NOT be released. The release script refuses a manifest with `host_permissions`.
 
-## 5. Rủi ro còn lại
+## 5. Residual risks
 
-| Rủi ro | Mức | Ghi chú |
+| Risk | Level | Notes |
 |---|---|---|
-| Script độc (XSS) trên origin đã được cho phép có thể gửi lệnh in. | Trung bình | Ranh giới là origin. Giảm thiểu: rate limit, scope tối thiểu, bật "Hỏi xác nhận mỗi lần in". |
-| Extension khác có content script trên cùng trang có thể giả message của trang. | Thấp | Tương đương script của trang. Extension khác không đọc được cấu hình. |
-| HTML in có thể tải ảnh/CSS từ URL ngoài. | Thấp | Site tự cung cấp HTML đó. Chưa chặn `img-src` để site dùng được logo qua https. |
-| Thiết bị USB/Serial nhận byte tuỳ ý từ site có scope `print`. | Trung bình | Chỉ tới thiết bị người dùng đã cấp quyền và đã gán vào profile. |
+| A malicious script (XSS) on an allowed origin can send print jobs. | Medium | The boundary is the origin. Mitigations: rate limit, minimal scopes, "Ask before every print". |
+| Another extension's content script on the same page can forge page messages. | Low | Equivalent to page script. It cannot read the configuration. |
+| Printed HTML can load images/CSS from external URLs. | Low | The site supplied that HTML itself. `img-src` is not restricted so sites can use https logos. |
+| USB/serial devices receive arbitrary bytes from sites with the `print` scope. | Medium | Only devices the user granted and assigned to a profile. |

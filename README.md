@@ -1,38 +1,52 @@
 # xDev Browser Print
 
-Chrome Extension (Manifest V3) và SDK TypeScript để website ReactJS in đơn thuốc, hoá đơn, tem nhãn tới máy in cấu hình theo loại chứng từ. Không cần backend, ứng dụng native hay cloud print.
+[![CI](https://github.com/tdduydev/xdev-browser-print/actions/workflows/ci.yml/badge.svg)](https://github.com/tdduydev/xdev-browser-print/actions/workflows/ci.yml)
 
-| Thư mục | Nội dung |
+A Chrome Extension (Manifest V3) and TypeScript SDK that let ReactJS web apps print prescriptions, invoices and labels to printers configured per document type. No backend, native app or cloud print service.
+
+Tiếng Việt: [docs/vi](docs/vi/ARCHITECTURE.md)
+
+| Path | Contents |
 |---|---|
-| `apps/extension` | Extension: service worker, content script, giao diện quản trị, cửa sổ in |
-| `packages/browser-print-sdk` | SDK `@xdev/browser-print` và hook `useBrowserPrint` |
-| `packages/core` | Logic dùng chung: origin, cấu hình, router, trạng thái job, bộ mã hoá |
-| `packages/shared-types` | Kiểu dữ liệu và protocol |
-| `tests/e2e` | Playwright e2e trên Chromium thật |
-| `docs` | Tài liệu thiết kế |
+| `apps/extension` | Extension: service worker, content script, admin UI, print window |
+| `packages/browser-print-sdk` | SDK `@xdev/browser-print` and the `useBrowserPrint` hook |
+| `packages/core` | Shared logic: origins, configuration, router, job states, encoders |
+| `packages/shared-types` | Types and protocol |
+| `tests/e2e` | Playwright e2e on real Chromium |
+| `docs` | Design documents |
 
-## Lệnh
+## Commands
 
 ```bash
 pnpm install
 pnpm lint && pnpm typecheck
 pnpm test          # unit + integration
-pnpm test:e2e      # e2e (lần đầu: pnpm exec playwright install chromium)
+pnpm test:e2e      # e2e (first time: pnpm exec playwright install chromium)
 pnpm build         # apps/extension/dist + packages/browser-print-sdk/dist
+pnpm package       # release/xdev-browser-print-<version>.zip
 ```
 
-Cài thử extension: mở `chrome://extensions`, bật Developer mode, chọn **Load unpacked** → `apps/extension/dist`.
+Try the extension: open `chrome://extensions`, enable Developer mode, click **Load unpacked** → `apps/extension/dist`.
 
-## Tài liệu
+## CI/CD
 
-- [Thiết kế tính năng](docs/ARCHITECTURE.md)
-- [API của SDK](docs/API.md)
-- [Bảo mật](docs/SECURITY.md)
-- [Kiểm thử](docs/TESTING.md)
-- [Ma trận tương thích](docs/COMPATIBILITY.md)
+| Workflow | Trigger | Does |
+|---|---|---|
+| `ci.yml` | Push to `main`, pull requests | Lint, typecheck; unit tests on Ubuntu/Windows/macOS; build + release ZIP artifact; Playwright e2e |
+| `release.yml` | Tag `v*.*.*` | Checks the tag matches the extension version, builds, creates a GitHub Release with the ZIP, then (optionally) uploads to the Chrome Web Store |
 
-## Giới hạn quan trọng
+Chrome Web Store upload runs only when the `chrome-web-store` environment has the secrets `CWS_CLIENT_ID`, `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN`, `CWS_EXTENSION_ID`. A successful upload means the item was **submitted for review**, not published.
 
-- Chrome trên Windows/macOS/Linux không cho extension liệt kê hoặc chọn máy in hệ điều hành. PDF/HTML luôn qua hộp thoại in.
-- Chrome không báo người dùng đã in hay huỷ. Job PDF/HTML kết thúc ở `UNKNOWN` + `PRINT_DIALOG_CLOSED`.
-- In trực tiếp không hộp thoại chỉ có với máy in nhận lệnh RAW qua WebUSB/Web Serial, hoặc khi quản trị viên chạy Chrome với `--kiosk-printing`.
+## Documents
+
+- [Feature design](docs/ARCHITECTURE.md)
+- [SDK API](docs/API.md)
+- [Security](docs/SECURITY.md)
+- [Testing](docs/TESTING.md)
+- [Compatibility matrix](docs/COMPATIBILITY.md)
+
+## Key limitations
+
+- Chrome on Windows/macOS/Linux does not let extensions list or select OS printers. PDF/HTML always go through the print dialog.
+- Chrome does not report whether the user printed or cancelled. PDF/HTML jobs end in `UNKNOWN` + `PRINT_DIALOG_CLOSED`.
+- Dialog-free printing exists only for printers that accept RAW commands over WebUSB/Web Serial, or when an administrator starts Chrome with `--kiosk-printing`.

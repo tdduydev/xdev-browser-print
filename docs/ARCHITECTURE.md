@@ -1,137 +1,137 @@
-# Thiết kế tính năng — xDev Browser Print
+# Feature design — xDev Browser Print
 
-Phiên bản tài liệu: 0.1.0 · Ngày: 2026-10-08 · Branch: `ai/browser-print-v1`
+Doc version: 0.1.0 · Date: 2026-10-08 · Vietnamese version: [vi/ARCHITECTURE.md](vi/ARCHITECTURE.md)
 
-Tài liệu này mô tả thiết kế của extension, SDK và các quyết định kỹ thuật. Giới hạn của Chrome có nguồn ở mục 2. Kết quả kiểm thử ở `docs/TESTING.md`.
+This document describes the extension, the SDK and the technical decisions behind them. Chrome limitations, with sources, are in section 2. Test results are in [TESTING.md](TESTING.md).
 
-## 1. Mục tiêu và phạm vi
+## 1. Goals and scope
 
-Website ReactJS gửi lệnh in qua SDK. Extension chọn máy in theo loại chứng từ rồi in. Hệ thống không dùng backend, ứng dụng native hay cloud print.
+A ReactJS website sends print jobs through the SDK. The extension picks the printer from the document type, then prints. There is no backend, native app or cloud print service.
 
-| Thuộc tính | Giá trị |
+| Property | Value |
 |---|---|
-| Trình duyệt | Google Chrome ≥ 118 trên Windows 10/11, macOS, Linux |
+| Browser | Google Chrome ≥ 118 on Windows 10/11, macOS, Linux |
 | Manifest | V3 |
-| Định dạng | `PDF`, `HTML`, `ESCPOS`, `ZPL`, `TSPL`, `RAW` |
-| Loại máy in | `A4`, `A5`, `K80`, `K58`, `BARCODE` |
-| Lưu cấu hình | `chrome.storage.local` (cấu hình), IndexedDB (lịch sử job, payload tạm). KHÔNG dùng `chrome.storage.sync`. |
+| Formats | `PDF`, `HTML`, `ESCPOS`, `ZPL`, `TSPL`, `RAW` |
+| Printer categories | `A4`, `A5`, `K80`, `K58`, `BARCODE` |
+| Storage | `chrome.storage.local` (configuration), IndexedDB (job history, temporary payloads). `chrome.storage.sync` is never used. |
 
-## 2. Giới hạn của Chrome (đã tra nguồn)
+## 2. Chrome limitations (sourced)
 
-| # | Giới hạn | Trạng thái | Hệ quả cho thiết kế |
+| # | Limitation | Status | Design consequence |
 |---|---|---|---|
-| L1 | `chrome.printing` chỉ có trên ChromeOS. | FACT | Không liệt kê, không chọn máy in hệ điều hành trên Windows/macOS/Linux. `getPrinters()` trả về **printer profile** do người dùng tạo. |
-| L2 | `window.print()` luôn mở hộp thoại in và không chọn được máy in. | FACT | PDF/HTML đi qua hộp thoại in của Chrome. Người dùng chọn máy in trong hộp thoại. |
-| L3 | Chrome không báo người dùng đã bấm In hay Huỷ. | FACT | Job PDF/HTML kết thúc ở `UNKNOWN` + `PRINT_DIALOG_CLOSED`. |
-| L4 | Cờ `--kiosk-printing` bỏ qua hộp thoại và in ra máy in mặc định của hệ điều hành. | FACT trên Windows. UNKNOWN trên Linux. Một nhà cung cấp nói macOS không hỗ trợ. | Đây là cấu hình triển khai do quản trị viên chọn. Extension không giả lập tính năng này. |
-| L5 | WebUSB có trong service worker của extension từ Chrome 118. `requestDevice()` không gọi được trong service worker. | FACT (Chrome docs) | Người dùng cấp quyền thiết bị ở trang options. Service worker dùng `getDevices()`. `minimum_chrome_version = 118`. |
-| L6 | Web Serial trong service worker. | UNKNOWN (MDN: chỉ có ở Dedicated Worker) | Nếu service worker không có `navigator.serial`, job chạy trong cửa sổ phụ `print.html`. |
-| L7 | Match pattern không ghi port thì khớp mọi port. | FACT (Chrome docs) | Service worker PHẢI so khớp origin chính xác, kể cả port. |
-| L8 | `externally_connectable` chỉ nhận danh sách URL tĩnh trong manifest. | FACT | Không dùng `externally_connectable`. Dùng content script đăng ký động theo từng origin. |
+| L1 | `chrome.printing` exists only on ChromeOS. | FACT | OS printers cannot be listed or selected on Windows/macOS/Linux. `getPrinters()` returns user-created **printer profiles**. |
+| L2 | `window.print()` always opens the print dialog and cannot pick a printer. | FACT | PDF/HTML go through Chrome's print dialog. The user picks the printer there. |
+| L3 | Chrome does not report whether the user clicked Print or Cancel. | FACT | PDF/HTML jobs end in `UNKNOWN` + `PRINT_DIALOG_CLOSED`. |
+| L4 | The `--kiosk-printing` flag skips the dialog and prints to the OS default printer. | FACT on Windows. UNKNOWN on Linux. One vendor reports macOS is not supported. | A deployment choice made by an administrator. The extension never fakes it. |
+| L5 | WebUSB is available in extension service workers since Chrome 118. `requestDevice()` cannot be called there. | FACT (Chrome docs) | Users grant devices on the options page. The service worker uses `getDevices()`. `minimum_chrome_version = 118`. |
+| L6 | Web Serial in service workers. | UNKNOWN (MDN: Dedicated Workers only) | If the service worker has no `navigator.serial`, the job runs in the `print.html` helper window. |
+| L7 | A match pattern without a port matches every port. | FACT (Chrome docs) | The service worker MUST compare the exact origin, port included. |
+| L8 | `externally_connectable` only accepts a static URL list in the manifest. | FACT | `externally_connectable` is not used. Content scripts are registered dynamically per origin. |
 
-## 3. Kiến trúc
+## 3. Architecture
 
 ```
 ReactJS app
-  └─ @xdev/browser-print (SDK)               window.postMessage (cùng origin)
-       └─ Content script (relay, không có quyền)  chrome.runtime port "xdbp-bridge"
+  └─ @xdev/browser-print (SDK)                window.postMessage (same origin)
+       └─ Content script (relay, no privileges)  chrome.runtime port "xdbp-bridge"
             └─ Service worker
-                 ├─ PageApi        xác thực origin + scope, chống replay
-                 ├─ JobManager     idempotency, rate limit, queue theo máy in, retry
+                 ├─ PageApi        origin + scope checks, replay protection
+                 ├─ JobManager     idempotency, rate limit, per-printer queue, retry
                  ├─ Router         documentType → mapping → printer profile
                  └─ Adapter registry
-                      ├─ BrowserPrintAdapter → cửa sổ print.html → hộp thoại in Chrome
-                      ├─ WebUsbPrintAdapter  → navigator.usb (trong service worker)
-                      └─ WebSerialPrintAdapter → navigator.serial (service worker hoặc print.html)
-                                                     └─ Máy in vật lý
+                      ├─ BrowserPrintAdapter → print.html window → Chrome print dialog
+                      ├─ WebUsbPrintAdapter  → navigator.usb (in the service worker)
+                      └─ WebSerialPrintAdapter → navigator.serial (service worker or print.html)
+                                                     └─ Physical printer
 ```
 
-| Thành phần | File | Trách nhiệm |
+| Component | Path | Responsibility |
 |---|---|---|
-| Shared types | `packages/shared-types/src` | Kiểu dữ liệu, mã lỗi, protocol. Là hợp đồng giữa SDK và extension. |
-| Core | `packages/core/src` | Logic thuần: kiểm tra origin, cấu hình, router, state machine, rate limit, replay guard, bộ mã hoá ESC/POS/ZPL/TSPL, PDF in thử. |
-| Service worker | `apps/extension/src/background` | Ghép các thành phần, nhận message, quản lý site và cửa sổ duyệt. |
-| Content script | `apps/extension/src/content/index.ts` | Chuyển message giữa trang và service worker. Không giữ quyền. |
-| Print runner | `apps/extension/src/print` | Hiển thị tài liệu và gọi hộp thoại in. Chạy job RAW khi service worker thiếu API. |
-| Admin UI | `apps/extension/src/options`, `popup`, `approve` | 8 màn hình quản trị, popup, cửa sổ duyệt. |
-| SDK | `packages/browser-print-sdk/src` | Class `XDevBrowserPrint`, hook `useBrowserPrint`. |
+| Shared types | `packages/shared-types/src` | Data types, error codes, protocol. The contract between SDK and extension. |
+| Core | `packages/core/src` | Pure logic: origin checks, configuration, router, state machine, rate limit, replay guard, ESC/POS/ZPL/TSPL encoders, test PDF. |
+| Service worker | `apps/extension/src/background` | Wires components, receives messages, manages sites and approval windows. |
+| Content script | `apps/extension/src/content/index.ts` | Relays messages between page and service worker. Holds no privileges. |
+| Print runner | `apps/extension/src/print` | Renders the document and opens the print dialog. Runs RAW jobs when the service worker lacks the API. |
+| Admin UI | `apps/extension/src/options`, `popup`, `approve` | 8 admin screens, popup, approval window. |
+| SDK | `packages/browser-print-sdk/src` | `XDevBrowserPrint` class, `useBrowserPrint` hook. |
 
-## 4. Luồng chính
+## 4. Main flows
 
-### 4.1 Cho phép một website (ghép nối)
+### 4.1 Allowing a website (pairing)
 
-1. Người dùng nhập origin ở màn hình **Website**, hoặc bấm **Cho phép website này** trong popup.
-2. Trang extension gửi `sites.pending` tới service worker. Lý do: popup có thể đóng khi Chrome hiện hộp thoại quyền.
-3. Trang extension gọi `chrome.permissions.request` với match pattern của host.
-4. Service worker nhận `permissions.onAdded` hoặc `sites.add`. Service worker lưu `SiteGrant` cho **origin chính xác** và gọi `chrome.scripting.registerContentScripts`.
-5. Service worker chèn content script vào các tab đang mở của host đó.
+1. The user enters an origin on the **Websites** screen, or clicks **Allow this website** in the popup.
+2. The extension page sends `sites.pending` to the service worker. Reason: the popup can close while Chrome shows the permission prompt.
+3. The extension page calls `chrome.permissions.request` with the host's match pattern.
+4. The service worker receives `permissions.onAdded` or `sites.add`. It stores a `SiteGrant` for the **exact origin** and calls `chrome.scripting.registerContentScripts`.
+5. The service worker injects the content script into open tabs of that host.
 
-Kết quả: chỉ origin được cho phép mới có content script. Manifest không khai báo `content_scripts` tĩnh.
+Result: only allowed origins get a content script. The manifest declares no static `content_scripts`.
 
-### 4.2 Kết nối từ SDK (`connect()`)
+### 4.2 Connecting from the SDK (`connect()`)
 
-1. SDK gửi `hello`. Content script trả `ready` kèm `extensionId`.
-2. SDK gửi `connect` với các scope cần dùng.
-3. Nếu grant đã có đủ scope, service worker trả kết quả ngay.
-4. Nếu thiếu scope, service worker mở cửa sổ `approve.html`. Người dùng cho phép hoặc từ chối. Sau 2 phút không trả lời, yêu cầu bị từ chối.
-5. Origin chưa có grant và bị từ chối → lỗi `PAIRING_REJECTED`.
+1. The SDK posts `hello`. The content script answers `ready` with the `extensionId`.
+2. The SDK sends `connect` with the scopes it needs.
+3. If the grant already covers the scopes, the service worker answers immediately.
+4. If scopes are missing, the service worker opens `approve.html`. The user allows or denies. With no answer after 2 minutes, the request is denied.
+5. An origin with no grant that is denied → `PAIRING_REJECTED`.
 
-### 4.3 In một tài liệu
+### 4.3 Printing a document
 
-1. SDK chuyển dữ liệu nhị phân sang base64 và gửi `print` kèm `idempotencyKey`.
-2. Service worker kiểm tra origin, scope `print`, `requestId`, `sentAt`.
-3. JobManager kiểm tra định dạng và kích thước, rồi tìm job cùng `idempotencyKey`. Nếu có job trùng → trả job cũ với `duplicate: true` và không in lại.
-4. JobManager kiểm tra rate limit theo origin.
-5. Router chọn printer profile theo thứ tự: `printerId` → mapping của `documentType` → profile mặc định tương thích.
-6. Router từ chối định dạng không khớp adapter. Ví dụ: `ZPL` tới máy `browser` → `UNSUPPORTED_FORMAT`.
-7. JobManager lưu payload vào IndexedDB, chuyển job sang `QUEUED` và trả `jobId`.
-8. JobManager ghi `DISPATCHING` vào IndexedDB **trước** khi gửi tới thiết bị.
-9. Adapter in. JobManager ghi trạng thái cuối và xoá payload.
-10. SDK nhận event `job`. Nếu mất event, SDK hỏi `getJobStatus` mỗi 2 giây.
+1. The SDK converts binary data to base64 and sends `print` with an `idempotencyKey`.
+2. The service worker checks origin, `print` scope, `requestId`, `sentAt`.
+3. JobManager checks format and size, then looks up a job with the same `idempotencyKey`. On a match it returns the existing job with `duplicate: true` and does not print again.
+4. JobManager checks the per-origin rate limit.
+5. The router picks the printer profile in this order: `printerId` → mapping of `documentType` → compatible default profile.
+6. The router rejects formats the adapter cannot carry. Example: `ZPL` to a `browser` printer → `UNSUPPORTED_FORMAT`.
+7. JobManager stores the payload in IndexedDB, moves the job to `QUEUED` and returns the `jobId`.
+8. JobManager writes `DISPATCHING` to IndexedDB **before** sending anything to the device.
+9. The adapter prints. JobManager writes the final state and deletes the payload.
+10. The SDK receives a `job` event. If events are lost, the SDK polls `getJobStatus` every 2 s.
 
-## 5. Trạng thái job
+## 5. Job states
 
-| Trạng thái | Ý nghĩa |
+| State | Meaning |
 |---|---|
-| `CREATED` | Job vừa tạo. |
-| `VALIDATING` | Đang kiểm tra dữ liệu và định tuyến. |
-| `WAITING_PERMISSION` | Site bật "Hỏi xác nhận mỗi lần in". Đang chờ người dùng. |
-| `QUEUED` | Đang chờ trong hàng đợi của máy in. Chưa gửi byte nào. |
-| `DISPATCHING` | Đang gửi tới thiết bị hoặc hộp thoại in. |
-| `SUBMITTED` | Thiết bị đã nhận đủ byte (`BYTES_WRITTEN_TO_DEVICE` / `BYTES_WRITTEN_TO_PORT`). Không có nghĩa giấy đã ra. |
-| `UNKNOWN` | Không biết job có in hay không. Ví dụ: `PRINT_DIALOG_CLOSED`, `INTERRUPTED_DURING_DISPATCH`, `DISPATCH_TIMEOUT`. |
-| `FAILED` | Job lỗi. Xem `errorCode`. |
-| `CANCELLED` | Job bị huỷ trước khi gửi. |
+| `CREATED` | Job created. |
+| `VALIDATING` | Checking data and routing. |
+| `WAITING_PERMISSION` | The site has "Ask before every print" on. Waiting for the user. |
+| `QUEUED` | Waiting in the printer's queue. No byte sent yet. |
+| `DISPATCHING` | Sending to the device or the print dialog. |
+| `SUBMITTED` | The device accepted all bytes (`BYTES_WRITTEN_TO_DEVICE` / `BYTES_WRITTEN_TO_PORT`). Does not mean paper came out. |
+| `UNKNOWN` | Not known whether the job printed. Examples: `PRINT_DIALOG_CLOSED`, `INTERRUPTED_DURING_DISPATCH`, `DISPATCH_TIMEOUT`. |
+| `FAILED` | The job failed. See `errorCode`. |
+| `CANCELLED` | Cancelled before sending. |
 
-Hệ thống KHÔNG có trạng thái `COMPLETED`. Lý do: không nguồn nào báo giấy đã ra một cách tin cậy.
+There is no `COMPLETED` state. Reason: no source reliably reports that paper came out.
 
-Chuyển trạng thái hợp lệ (`packages/core/src/job-machine.ts`):
+Valid transitions (`packages/core/src/job-machine.ts`):
 
 ```
 CREATED → VALIDATING → QUEUED → DISPATCHING → SUBMITTED | UNKNOWN | FAILED
                     ↘ WAITING_PERMISSION → QUEUED | CANCELLED
 QUEUED → CANCELLED
-DISPATCHING → QUEUED   (chỉ khi retry và chưa gửi byte nào)
+DISPATCHING → QUEUED   (retry only, and only when no byte was sent)
 ```
 
-### 5.1 Retry và chống in trùng
+### 5.1 Retry and duplicate prevention
 
-| Điều kiện | Hành động |
+| Condition | Action |
 |---|---|
-| Lỗi trước khi gửi byte nào (không tìm thấy thiết bị, thiết bị bận, mở cổng lỗi) | Retry. Tối đa 3 lần gửi (2 lần retry). Chờ 1 s trước lần 2, 3 s trước lần 3. |
-| Đã gửi một phần byte rồi lỗi | `FAILED` + `PARTIAL_TRANSFER`. KHÔNG retry. |
-| Adapter quá thời gian hoặc throw | `UNKNOWN`. KHÔNG retry. |
-| Service worker restart khi job ở `QUEUED` | Gửi tiếp. |
-| Service worker restart khi job ở `DISPATCHING` | `UNKNOWN` + `INTERRUPTED_DURING_DISPATCH`. KHÔNG gửi lại. |
-| Service worker restart khi cửa sổ in vẫn mở | Giữ `DISPATCHING`. Cửa sổ in báo kết quả sau. |
+| Error before any byte was sent (device not found, busy, port open failed) | Retry. At most 3 sends (2 retries). Wait 1 s before the 2nd, 3 s before the 3rd. |
+| Some bytes sent, then an error | `FAILED` + `PARTIAL_TRANSFER`. No retry. |
+| Adapter timed out or threw | `UNKNOWN`. No retry. |
+| Service worker restart while the job is `QUEUED` | Continue sending. |
+| Service worker restart while the job is `DISPATCHING` | `UNKNOWN` + `INTERRUPTED_DURING_DISPATCH`. Never resent. |
+| Service worker restart while the print window is still open | Stay `DISPATCHING`. The print window reports later. |
 
-Lý do: một đơn thuốc hay tem bệnh nhân in trùng gây hại hơn một bản bị thiếu. Người dùng có thể in lại thủ công.
+Reason: a duplicated prescription or patient label does more harm than a missing one. The user can reprint manually.
 
-Thời gian chờ tối đa của mỗi lần gửi: `browser` 15 phút, `webusb` 60 s, `webserial` 60 s.
+Maximum wait per send: `browser` 15 min, `webusb` 60 s, `webserial` 60 s.
 
-## 6. Adapter
+## 6. Adapters
 
-Interface chung (`apps/extension/src/adapters/types.ts`):
+Common interface (`apps/extension/src/adapters/types.ts`):
 
 ```ts
 interface PrintAdapter {
@@ -143,50 +143,50 @@ interface PrintAdapter {
 }
 ```
 
-| Adapter | Định dạng | Không cần hộp thoại | Chọn được máy in | Nơi chạy |
+| Adapter | Formats | No dialog | Can target a printer | Runs in |
 |---|---|---|---|---|
-| `browser` | PDF, HTML | Không (chỉ có với `--kiosk-printing`) | Không, người dùng chọn trong hộp thoại | Cửa sổ `print.html` |
-| `webusb` | ESCPOS, ZPL, TSPL, RAW | Có | Có (vendorId/productId/serialNumber) | Service worker. Cửa sổ phụ nếu thiếu API. |
-| `webserial` | ESCPOS, ZPL, TSPL, RAW | Có | Có (usbVendorId/usbProductId/index) | Service worker nếu có API, nếu không thì cửa sổ phụ |
+| `browser` | PDF, HTML | No (only with `--kiosk-printing`) | No, the user picks in the dialog | `print.html` window |
+| `webusb` | ESCPOS, ZPL, TSPL, RAW | Yes | Yes (vendorId/productId/serialNumber) | Service worker. Helper window if the API is missing. |
+| `webserial` | ESCPOS, ZPL, TSPL, RAW | Yes | Yes (usbVendorId/usbProductId/index) | Service worker if available, otherwise helper window |
 
 ### 6.1 BrowserPrintAdapter
 
-- PDF: tạo Blob URL trong trang extension, nạp vào iframe, gọi `print()` trên iframe.
-- HTML: làm sạch bằng DOMPurify. Đặt vào iframe `sandbox="allow-same-origin allow-modals"` (không có `allow-scripts`). Thêm `@page` theo khổ giấy và lề của profile.
-- Số bản (copies): HTML lặp nội dung với ngắt trang. PDF không đặt trước được số bản. Cửa sổ in hiện số bản yêu cầu để người dùng chọn.
-- Cửa sổ in giữ port `xdbp-keepalive` và ping mỗi 20 s để service worker không bị dừng khi người dùng đang ở hộp thoại.
-- Người dùng đóng cửa sổ trước khi hộp thoại mở → `FAILED` + `PRINT_WINDOW_CLOSED`. Đóng sau khi hộp thoại mở → `UNKNOWN`.
+- PDF: create a Blob URL in the extension page, load it in an iframe, call `print()` on the iframe.
+- HTML: sanitize with DOMPurify. Render in an iframe with `sandbox="allow-same-origin allow-modals"` (no `allow-scripts`). Add an `@page` rule from the profile's paper size and margins.
+- Copies: HTML repeats the content with page breaks. PDF copies cannot be preset; the print window shows the requested count for the user to set.
+- The print window holds an `xdbp-keepalive` port and pings every 20 s, so the service worker stays alive while the user is in the dialog.
+- Window closed before the dialog opened → `FAILED` + `PRINT_WINDOW_CLOSED`. Closed after the dialog opened → `UNKNOWN`.
 
 ### 6.2 WebUsbPrintAdapter
 
-1. Tìm thiết bị đã cấp quyền bằng `getDevices()`.
-2. Mở thiết bị. Chọn configuration 1 nếu chưa có.
-3. Chọn interface lớp máy in (class 7) có endpoint bulk OUT. Nếu không có, chọn interface bất kỳ có bulk OUT.
-4. `claimInterface`. Lỗi ở bước này → `DEVICE_BUSY` (driver hệ điều hành đang giữ interface).
-5. Gửi dữ liệu theo khối 16 KB.
-6. Luôn `releaseInterface` và `close` trong `finally`.
+1. Find the granted device with `getDevices()`.
+2. Open it. Select configuration 1 if none is selected.
+3. Pick the printer-class interface (class 7) with a bulk OUT endpoint. If there is none, pick any interface with bulk OUT.
+4. `claimInterface`. An error here → `DEVICE_BUSY` (the OS driver owns the interface).
+5. Send data in 16 KB chunks.
+6. Always `releaseInterface` and `close` in `finally`.
 
 ### 6.3 WebSerialPrintAdapter
 
-1. Tìm cổng đã cấp quyền bằng `getPorts()` theo USB id và chỉ số.
-2. Mở cổng với `baudRate`, `dataBits`, `stopBits`, `parity`, `flowControl` của profile.
-3. Ghi dữ liệu và chờ `writer.ready`.
-4. Luôn đóng cổng.
+1. Find the granted port with `getPorts()` by USB ids and index.
+2. Open it with the profile's `baudRate`, `dataBits`, `stopBits`, `parity`, `flowControl`.
+3. Write the data and wait for `writer.ready`.
+4. Always close the port.
 
-`InvalidStateError` khi mở → `DEVICE_BUSY`. Web Serial không trả số byte đã ghi khi lỗi. Vì vậy lỗi sau khi bắt đầu ghi → `PARTIAL_TRANSFER`, không retry.
+`InvalidStateError` on open → `DEVICE_BUSY`. Web Serial reports no byte count on failure, so an error after writing started → `PARTIAL_TRANSFER`, no retry.
 
-### 6.4 Chuẩn bị byte RAW
+### 6.4 Preparing RAW bytes
 
-- Văn bản được mã hoá theo `encoding` của profile: `utf-8`, `latin1` hoặc `ascii`. Với `ascii`, tiếng Việt bỏ dấu (`Đơn thuốc` → `Don thuoc`).
-- `ESCPOS` + `autoCut = true`: thêm lệnh cắt nếu cuối dữ liệu chưa có `GS V`.
-- `copies` > 1: lặp toàn bộ dữ liệu.
+- Text is encoded with the profile's `encoding`: `utf-8`, `latin1` or `ascii`. With `ascii`, Vietnamese diacritics are removed (`Đơn thuốc` → `Don thuoc`).
+- `ESCPOS` + `autoCut = true`: append a cut command if the data does not already end with `GS V`.
+- `copies` > 1: repeat the whole payload.
 
-## 7. Cấu hình
+## 7. Configuration
 
 ```json
 {
   "schemaVersion": 1,
-  "profiles": [{ "id": "printer-k80", "name": "Máy in hoá đơn", "adapter": "webusb", "category": "K80",
+  "profiles": [{ "id": "printer-k80", "name": "Receipt printer", "adapter": "webusb", "category": "K80",
                  "paperSize": "K80", "orientation": "portrait", "copies": 1,
                  "marginsMm": { "top": 0, "right": 0, "bottom": 0, "left": 0 },
                  "encoding": "ascii", "autoCut": true,
@@ -197,40 +197,40 @@ interface PrintAdapter {
 }
 ```
 
-Quy tắc kiểm tra (`packages/core/src/config.ts`):
+Validation rules (`packages/core/src/config.ts`):
 
-| Trường | Quy tắc |
+| Field | Rule |
 |---|---|
 | `id` | `^[a-z0-9][a-z0-9_-]{0,63}$` |
 | `documentType` | `^[A-Z][A-Z0-9_]{0,63}$` |
-| `paperSize` | `A4`, `A5`, `K80`, `K58` hoặc `<rộng>x<cao>` theo mm, ví dụ `50x30` |
-| `copies` | Số nguyên 1–20 |
-| `marginsMm` | 0–100 mm mỗi cạnh |
+| `paperSize` | `A4`, `A5`, `K80`, `K58` or `<width>x<height>` in mm, e.g. `50x30` |
+| `copies` | Integer 1–20 |
+| `marginsMm` | 0–100 mm per side |
 | `barcodeDensity` | 6, 8, 12, 24 dpmm |
-| `device` | Bắt buộc với `webusb` và `webserial` |
-| `serial.baudRate` | 300–4 000 000 |
+| `device` | Required for `webusb` and `webserial` |
+| `serial.baudRate` | 300–4,000,000 |
 
-Mỗi loại máy in chỉ có một profile mặc định. Không xoá được profile đang được mapping dùng. Dữ liệu cấu hình hỏng bị bỏ khi đọc, extension vẫn chạy với phần hợp lệ.
+Each category has at most one default profile. A profile used by a mapping cannot be deleted. Corrupt stored configuration is dropped on read; the extension keeps working with the valid part.
 
-## 8. Giao diện quản trị
+## 8. Admin UI
 
-| Màn hình | Chức năng |
+| Screen | Purpose |
 |---|---|
-| Tổng quan | Phiên bản, hệ điều hành, số site, profile, mapping, job đang chạy. Bảng khả năng adapter. Giới hạn của Chrome. |
-| Máy in | Thêm, sửa, xoá printer profile. Hiện trạng thái sẵn sàng. |
-| Gán chứng từ | Gán `documentType` cho profile, ghi đè khổ giấy, hướng giấy, số bản. |
-| Thiết bị | Cấp và thu hồi quyền WebUSB, Web Serial. |
-| In thử | In thử PDF, HTML, ESC/POS (K80/K58), ZPL, TSPL. |
-| Lịch sử in | Thông tin job: thời gian, site, chứng từ, định dạng, kích thước, máy in, trạng thái. Không có nội dung tài liệu. |
-| Website | Thêm origin, chọn scope, bật xác nhận từng lệnh in, thu hồi. |
-| Cài đặt | Ngôn ngữ (mặc định tiếng Việt), giới hạn dung lượng, rate limit, số dòng lịch sử, cho phép site đổi mapping, cho phép localhost. |
+| Dashboard | Version, OS, number of sites, profiles, mappings, active jobs. Adapter capability table. Chrome limitations. |
+| Printers | Add, edit, delete printer profiles. Readiness status. |
+| Document mapping | Map a `documentType` to a profile; override paper size, orientation, copies. |
+| Devices | Grant and revoke WebUSB and Web Serial access. |
+| Test print | Test PDF, HTML, ESC/POS (K80/K58), ZPL, TSPL. |
+| Print history | Job metadata: time, site, document type, format, size, printer, state. No document content. |
+| Websites | Add origins, choose scopes, require confirmation per job, revoke. |
+| Settings | Language (Vietnamese by default), size limit, rate limit, history size, allow sites to change mappings, allow localhost. |
 
-## 9. Quyết định thiết kế
+## 9. Design decisions
 
-| Quyết định | Lý do | Đánh đổi |
+| Decision | Reason | Trade-off |
 |---|---|---|
-| Content script đăng ký động thay cho `externally_connectable` | Origin do người dùng thêm lúc chạy. `externally_connectable` chỉ nhận danh sách tĩnh. | Cần quyền host theo từng site. Trang phải tải lại nếu đã mở trước khi cấp quyền (đã giảm bằng cách chèn script vào tab đang mở). |
-| Mọi thay đổi cấu hình đi qua service worker, có hàng đợi | `chrome.storage` không có transaction. | Trang options phải gửi message thay vì ghi trực tiếp. |
-| Payload lưu IndexedDB, xoá khi job kết thúc | Message của Chrome là JSON. Cửa sổ in cần đọc file lớn. | Payload nằm trên đĩa trong lúc job chạy. |
-| Một hàng đợi cho mỗi printer profile | Hai job không được trộn byte trên một thiết bị. | Các job trên cùng máy in chạy tuần tự. |
-| HTML của site hiển thị trong iframe sandbox sau khi làm sạch | Không để mã của site chạy với quyền extension. | Mất script và form trong tài liệu in. Tài liệu in PHẢI là HTML tĩnh. |
+| Dynamically registered content scripts instead of `externally_connectable` | Origins are added at runtime. `externally_connectable` is static. | Needs a host permission per site. Pages opened before the grant need the script injected (done for open tabs). |
+| All configuration writes go through a queue in the service worker | `chrome.storage` has no transactions. | Options pages send messages instead of writing directly. |
+| Payloads live in IndexedDB and are deleted when the job ends | Chrome messages are JSON. The print window needs large files. | The payload is on disk while the job runs. |
+| One queue per printer profile | Two jobs must never interleave bytes on one device. | Jobs on the same printer run one after another. |
+| Site HTML is sanitized and shown in a sandboxed iframe | Site code must never run with extension privileges. | Scripts and forms in documents are dropped. Print documents MUST be static HTML. |
