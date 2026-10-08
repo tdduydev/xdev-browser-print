@@ -30,6 +30,12 @@ Kết quả Linux lấy từ CI run 37777305750 (PR #2, 2026-10-08). Windows có
 
 ## Thiết bị đã xác minh
 
+Chỉ thêm dòng sau khi có biên bản đã điền theo [MANUAL-TEST.md](MANUAL-TEST.md) kèm ảnh bản in.
+
+| Model máy in | Loại | Kết nối | OS + Chrome | Case đạt | Driver / cấu hình | Ngày | Người test | Biên bản |
+|---|---|---|---|---|---|---|---|---|
+| _chưa có_ | | | | | | | | |
+
 Chưa có thiết bị nào ở mức **Verified on Physical Printer**.
 
 ## Ghi chú theo hệ điều hành (chưa kiểm chứng trên máy thật)
