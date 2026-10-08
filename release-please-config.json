@@ -9,8 +9,20 @@
       "bump-patch-for-minor-pre-major": false,
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
-        { "type": "json", "path": "apps/extension/package.json", "jsonpath": "$.version" },
-        { "type": "json", "path": "packages/browser-print-sdk/package.json", "jsonpath": "$.version" }
+        {
+          "type": "json",
+          "path": "apps/extension/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/browser-print-sdk/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "generic",
+          "path": "packages/browser-print-sdk/src/client.ts"
+        }
       ]
     }
   }
