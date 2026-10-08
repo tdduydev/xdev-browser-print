@@ -17,9 +17,10 @@ Trước lần phát hành public đầu tiên:
 4. Tạo environment GitHub `npm` với required reviewers; thêm secret `NPM_TOKEN`
    là granular token có quyền publish package/scope và bypass 2FA phù hợp.
    Không commit thông tin xác thực.
-5. Đặt version SDK = extension thành version mới, cài bằng frozen lockfile,
-   build rồi chạy `pnpm check:sdk-package vX.Y.Z`.
-6. Sau review/merge, maintainer được ủy quyền push tag `vX.Y.Z`. Chỉ duyệt
+5. release-please giữ version của SDK, extension và root bằng nhau trong Release PR.
+   Muốn kiểm tra một version ở máy: cài bằng frozen lockfile, build rồi chạy
+   `pnpm check:sdk-package vX.Y.Z`.
+6. Sau review/merge, merge Release PR của release-please; PR này tạo tag `vX.Y.Z` và chạy release (push tag bằng tay vẫn được). Chỉ duyệt
    environment npm sau khi xem release. Version npm không thể ghi đè; mỗi lần
    đã publish phải dùng version mới cho lần tiếp theo.
 7. Xác nhận version và provenance trên npm; cài vào ứng dụng ngoài repo để kiểm

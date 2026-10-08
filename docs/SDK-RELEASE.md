@@ -19,9 +19,10 @@ Before the first public release:
 4. Create the GitHub `npm` environment with required reviewers. Add `NPM_TOKEN`
    as an environment secret, using a granular npm publish token with appropriate
    package/scope permissions and 2FA bypass. Never commit credentials.
-5. Set SDK and extension package versions to the same new version, install with
-   the frozen lockfile, build, then run `pnpm check:sdk-package vX.Y.Z`.
-6. After normal review/merge, an authorized maintainer pushes `vX.Y.Z`. Approve
+5. release-please keeps the SDK, extension and root versions equal in its Release
+   PR. To check a version locally: install with the frozen lockfile, build, then
+   run `pnpm check:sdk-package vX.Y.Z`.
+6. After normal review/merge, merge the release-please Release PR, which tags `vX.Y.Z` and runs the release (a hand-pushed tag also works). Approve
    the npm environment only after reviewing the release. npm versions are
    immutable; choose a fresh version for every attempt that actually publishes.
 7. Confirm the npm package version and provenance, and install it in an external

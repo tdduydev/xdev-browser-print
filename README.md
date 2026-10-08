@@ -36,9 +36,12 @@ Try the extension: open `chrome://extensions`, enable Developer mode, click **Lo
 | Workflow | Trigger | Does |
 |---|---|---|
 | `ci.yml` | Push to `main`, pull requests | Lint, typecheck; unit tests on Ubuntu/Windows/macOS; build + release ZIP artifact; Playwright e2e |
-| `release.yml` | Tag `v*.*.*` | Checks SDK/extension/tag versions, builds and verifies the SDK tarball, creates a GitHub Release, then publishes the SDK through the npm environment (skipped until the SDK license is approved) and uploads to the Chrome Web Store |
+| `release-please.yml` | Push to `main` | Keeps one Release PR up to date: next version from conventional commits (`feat:` → minor, `fix:` → patch while below 1.0), CHANGELOG, version in the root, extension and SDK `package.json`. Merging it tags `vX.Y.Z` and calls `release.yml` |
+| `release.yml` | Called by release-please, or a hand-pushed tag `v*.*.*` | Checks SDK/extension/tag versions, builds and verifies the SDK tarball, creates a GitHub Release, then publishes the SDK through the npm environment (skipped until the SDK license is approved) and uploads to the Chrome Web Store |
 
 Chrome Web Store upload (API V2) runs only when the `chrome-web-store` environment has the variables `GCP_WIF_PROVIDER`, `CWS_SERVICE_ACCOUNT`, `CWS_PUBLISHER_ID`, `CWS_EXTENSION_ID`. CI signs in through Workload Identity Federation as the `cws-publisher` service account, so no secret is stored; that service account must be added in the Chrome Web Store Developer Dashboard. A successful upload means the item was **submitted for review**, not published.
+
+Releasing is therefore: merge PRs with conventional commit titles → merge the Release PR → approve the `npm` and `chrome-web-store` deployments in the Actions run. Commits that are not conventional (`ai(T4): …`, merge commits) do not appear in the CHANGELOG. GitHub does not run CI on the Release PR itself because GITHUB_TOKEN opened it; `release.yml` runs the full test suite before publishing.
 
 SDK publication setup and pending registry/license decisions: [EN](docs/SDK-RELEASE.md) / [VI](docs/vi/SDK-RELEASE.md).
 
