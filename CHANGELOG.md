@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.0...v0.3.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **sdk:** keep SDK_VERSION equal to the package version ([ec5e179](https://github.com/tdduydev/xdev-browser-print/commit/ec5e1790a57a979d3e95a17ed6c842c803288888))
+* **sdk:** set SDK_VERSION to the current 0.3.0 ([e96d5fc](https://github.com/tdduydev/xdev-browser-print/commit/e96d5fc266cd0c9a8527affb17759fce3a89b9b8))
+
 ## [0.3.0](https://github.com/tdduydev/xdev-browser-print/compare/v0.2.0...v0.3.0) (2026-10-08)
 
 
