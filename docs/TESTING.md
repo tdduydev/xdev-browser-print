@@ -11,7 +11,7 @@ Run date: 2026-10-08 · Machine: macOS 27.0.1 · Node 26.10.0 · pnpm 10.34.6 ·
 | Unit — core | Vitest 3.2.7 (node) | 70 | 70 passed |
 | Unit + integration — extension | Vitest 3.2.7 (jsdom) | 54 | 54 passed |
 | Unit + integration — SDK | Vitest 3.2.7 (jsdom) | 18 | 18 passed |
-| E2E — real extension in Chromium | Playwright 1.64.0 | 16 | 16 passed |
+| E2E — real extension in Chromium | Playwright 1.64.0 | 19 | 19 passed |
 | Lint | ESLint 9.39.5 | — | 0 errors |
 | Typecheck (test files included) | TypeScript 5.9.3 strict | — | 0 errors |
 
@@ -29,7 +29,7 @@ pnpm exec playwright install chromium   # first time
 pnpm lint
 pnpm typecheck
 pnpm test        # unit + integration (142 tests)
-pnpm test:e2e    # builds the SDK and the e2e extension, then runs Playwright (16 tests)
+pnpm test:e2e    # builds the SDK, the React demo and the e2e extension, then runs Playwright (19 tests)
 ```
 
 ## 3. Scope per level
@@ -129,6 +129,19 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | UI-02 | Create an A5 profile and map `PRESCRIPTION` through the UI | Tables show the profile and mapping; configuration saved |
 | UI-03 | Manifest | MV3, module service worker, no static `content_scripts` |
 
+### 4.6 Extension popup (e2e)
+
+| ID | Case | Expected |
+|---|---|---|
+| POP-01 | Open popup on unpaired localhost, pair it, then revoke it | Pair button appears; grant shows `read` + `print`; revoke returns to unpaired state |
+| POP-02 | Open popup on `chrome://settings` | `popup.unsupportedPage` appears and pairing is unavailable |
+
+### 4.7 React demo (e2e)
+
+| ID | Case | Expected | File |
+|---|---|---|---|
+| DEMO-01 | Built `examples/react-demo` served on localhost, site allowed, **Connect** then **Print** the A5 prescription | State `ready` → `connected`, printer listed; print window renders the HTML; job shows `UNKNOWN` / `PRINT_DIALOG_CLOSED` | `tests/e2e/react-demo.spec.ts` |
+
 ## 5. Not tested yet
 
 | Item | Reason | Task |
@@ -138,6 +151,5 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | WebUSB/Web Serial with real printers (K80, K58, label) | No devices in CI | BP-13 |
 | Windows e2e | Unit tests pass on Windows in CI; browser e2e runs on Linux (CI) and macOS (local) only | BP-12 |
 | Real `chrome.permissions.request` prompt | Playwright cannot click Chrome's prompt; the e2e build pre-grants localhost | BP-13 |
-| Extension popup | No e2e yet | BP-10 |
 | `confirmEachJob` in real Chrome | Integration tests only | BP-10 |
 | Coverage | Tool not installed | BP-10 |
