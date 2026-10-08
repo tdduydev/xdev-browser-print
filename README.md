@@ -44,6 +44,7 @@ Chrome Web Store upload runs only when the `chrome-web-store` environment has th
 - [Security](docs/SECURITY.md)
 - [Testing](docs/TESTING.md)
 - [Compatibility matrix](docs/COMPATIBILITY.md)
+- [Phase 2 design and task plan](docs/PHASE-2.md)
 
 ## Key limitations
 
