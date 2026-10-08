@@ -45,5 +45,10 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "tsup": "8.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tdduydev/xdev-browser-print.git",
+    "directory": "packages/browser-print-sdk"
   }
 }
