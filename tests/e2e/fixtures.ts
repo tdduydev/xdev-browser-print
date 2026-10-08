@@ -7,14 +7,15 @@ const ROOT = join(import.meta.dirname, '..', '..');
 export const EXTENSION_DIR = join(ROOT, 'apps/extension/dist-e2e');
 const SDK_DIR = join(ROOT, 'packages/browser-print-sdk/dist');
 const SITE_DIR = join(import.meta.dirname, 'site');
+export const DEMO_DIR = join(ROOT, 'examples/react-demo/dist');
 
-const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.map': 'application/json' };
+const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.map': 'application/json' };
 
-/** Static server for the test site and the built SDK. */
-export function startSite(): Promise<{ server: Server; port: number }> {
+/** Static server for the test site (or another built site, e.g. the React demo) and the built SDK. */
+export function startSite(siteDir = SITE_DIR): Promise<{ server: Server; port: number }> {
   const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
-    const [dir, rel] = url.pathname.startsWith('/sdk/') ? [SDK_DIR, url.pathname.slice(5)] : [SITE_DIR, url.pathname === '/' ? 'index.html' : url.pathname.slice(1)];
+    const [dir, rel] = url.pathname.startsWith('/sdk/') ? [SDK_DIR, url.pathname.slice(5)] : [siteDir, url.pathname === '/' ? 'index.html' : url.pathname.slice(1)];
     const file = normalize(join(dir, rel));
     if (!file.startsWith(dir)) return res.writeHead(403).end();
     try {

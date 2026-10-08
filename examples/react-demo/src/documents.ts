@@ -13,6 +13,7 @@ const GS = '\x1d';
 
 const prescriptionHtml = `<!doctype html>
 <html><head><meta charset="utf-8"><style>
+  @page { size: A5; margin: 8mm; }
   body { font-family: sans-serif; font-size: 12pt; }
   h1 { text-align: center; } table { width: 100%; border-collapse: collapse; }
   td, th { border: 1px solid #000; padding: 4px; text-align: left; }

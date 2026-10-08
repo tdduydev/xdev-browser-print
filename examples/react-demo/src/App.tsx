@@ -10,9 +10,13 @@ export function App() {
 
   const onPrint = async () => {
     setBusy(true);
-    // The hook already keeps the error and the job; swallow the rethrow so it is not an unhandled rejection.
-    await print({ ...doc.options, idempotencyKey: `${doc.id}-${Date.now()}` }).catch(() => undefined);
-    setBusy(false);
+    try {
+      await print({ ...doc.options, idempotencyKey: `${doc.id}-${Date.now()}` });
+    } catch {
+      // The hook already keeps the error and the job; swallow the rethrow so it is not an unhandled rejection.
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
