@@ -1,39 +1,43 @@
-# Ma trận tương thích
+# Compatibility matrix
 
-Mức độ:
+Vietnamese version: [vi/COMPATIBILITY.md](vi/COMPATIBILITY.md)
 
-- **Implemented**: đã có code và test với mock/thiết bị giả.
-- **Verified on Browser**: đã chạy đúng trên Chrome/Chromium thật (tự động hoặc thủ công).
-- **Verified on Physical Printer**: đã in ra giấy trên máy in thật.
+Levels:
 
-Không tính năng nào được nâng mức chỉ dựa vào mock test.
+- **Implemented**: code exists and is tested with mocks / fake devices.
+- **Verified on Browser**: works on real Chrome/Chromium (automated or manual).
+- **Verified on Physical Printer**: printed on paper with a real printer.
 
-Cập nhật: 2026-10-08.
+No feature is promoted on the basis of mock tests alone.
 
-## Tính năng × hệ điều hành
+Updated: 2026-10-08.
 
-| Tính năng | macOS | Windows 10/11 | Linux |
+## Features × operating systems
+
+| Feature | macOS | Windows 10/11 | Linux |
 |---|---|---|---|
-| Cài extension, service worker, giao diện quản trị | Verified on Browser (Chromium 156 headless, e2e) | Implemented | Implemented |
-| Ghép nối website, scope, cửa sổ duyệt, thu hồi | Verified on Browser (e2e) | Implemented | Implemented |
-| Chống replay, trùng job, rate limit | Verified on Browser (e2e) | Implemented | Implemented |
-| Service worker restart | Verified on Browser (e2e, CDP stop) | Implemented | Implemented |
-| HTML → cửa sổ in (làm sạch, sandbox) | Verified on Browser (headless; hộp thoại chưa hiện) | Implemented | Implemented |
-| PDF → cửa sổ in | Verified on Browser (headless; job tới trạng thái cuối) | Implemented | Implemented |
-| Hộp thoại in Chrome, chọn máy in | Chưa kiểm | Chưa kiểm | Chưa kiểm |
-| In không hộp thoại bằng `--kiosk-printing` | UNKNOWN (một nhà cung cấp nói không hỗ trợ) | Có tài liệu của bên thứ ba, chưa kiểm | UNKNOWN |
-| WebUSB → ESC/POS (K80/K58) | Implemented | Implemented (thường cần driver WinUSB) | Implemented (cần udev rule, gỡ `usblp`) |
-| WebUSB → ZPL/TSPL (tem) | Implemented | Implemented | Implemented |
+| Extension install, service worker, admin UI | Verified on Browser (Chromium 156 headless, e2e, local) | Implemented (unit tests pass in CI) | Verified on Browser (CI e2e, `ubuntu-latest`) |
+| Website pairing, scopes, approval window, revoke | Verified on Browser (e2e) | Implemented | Verified on Browser (CI e2e) |
+| Replay, duplicate and rate-limit protection | Verified on Browser (e2e) | Implemented | Verified on Browser (CI e2e) |
+| Service worker restart | Verified on Browser (e2e, CDP stop) | Implemented | Verified on Browser (CI e2e) |
+| HTML → print window (sanitized, sandboxed) | Verified on Browser (headless; no dialog shown) | Implemented | Verified on Browser (CI e2e, headless) |
+| PDF → print window | Verified on Browser (headless; job reaches a final state) | Implemented | Verified on Browser (CI e2e, headless) |
+| Chrome print dialog, printer selection | Not tested | Not tested | Not tested |
+| Dialog-free printing via `--kiosk-printing` | UNKNOWN (a vendor reports it is unsupported) | Documented by third parties, not tested | UNKNOWN |
+| WebUSB → ESC/POS (K80/K58) | Implemented | Implemented (usually needs the WinUSB driver) | Implemented (needs a udev rule, `usblp` unbound) |
+| WebUSB → ZPL/TSPL (labels) | Implemented | Implemented | Implemented |
 | Web Serial → ESC/POS/ZPL/TSPL | Implemented | Implemented | Implemented |
 
-## Thiết bị đã xác minh
+Linux results come from CI run 37777305750 (PR #2, 2026-10-08). Windows has unit tests in CI but no browser e2e yet.
 
-Chưa có thiết bị nào ở mức **Verified on Physical Printer**.
+## Verified devices
 
-## Ghi chú theo hệ điều hành (chưa kiểm chứng trên máy thật)
+No device has reached **Verified on Physical Printer** yet.
 
-| Hệ điều hành | Ghi chú |
+## OS notes (not yet verified on real machines)
+
+| OS | Notes |
 |---|---|
-| Windows | Driver `usbprint.sys` thường giữ interface máy in USB. Khi đó `claimInterface` lỗi → `DEVICE_BUSY`. Hướng xử lý thường gặp: cài WinUSB cho thiết bị (ví dụ bằng Zadig). Máy sẽ không in được qua driver Windows nữa. |
-| Linux | Cần quyền udev cho thiết bị và gỡ driver `usblp` khỏi interface. |
-| macOS | Hệ điều hành có thể giữ một số thiết bị. Cần kiểm thử theo model. |
+| Windows | The `usbprint.sys` driver usually owns the USB printer interface, so `claimInterface` fails → `DEVICE_BUSY`. A common fix is installing WinUSB for the device (e.g. with Zadig). The printer then stops working through the Windows driver. |
+| Linux | Needs udev permissions for the device and the `usblp` driver unbound from the interface. |
+| macOS | The OS may claim some devices. Test per model. |
