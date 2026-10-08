@@ -36,12 +36,12 @@ Try the extension: open `chrome://extensions`, enable Developer mode, click **Lo
 | Workflow | Trigger | Does |
 |---|---|---|
 | `ci.yml` | Push to `main`, pull requests | Lint, typecheck; unit tests on Ubuntu/Windows/macOS; build + release ZIP artifact; Playwright e2e |
-| `release-please.yml` | Push to `main` | Keeps one Release PR up to date: next version from conventional commits (`feat:` → minor, `fix:` → patch while below 1.0), CHANGELOG, version in the root, extension and SDK `package.json`. Merging it tags `vX.Y.Z` and calls `release.yml` |
+| `release-please.yml` | Push to `main` | When the push has releasable commits (`feat:` → minor, `fix:` → patch while below 1.0), opens the Release PR (version in root, extension and SDK `package.json`, CHANGELOG), **merges it automatically**, tags `vX.Y.Z` and calls `release.yml` |
 | `release.yml` | Called by release-please, or a hand-pushed tag `v*.*.*` | Checks SDK/extension/tag versions, builds and verifies the SDK tarball, creates a GitHub Release, then publishes the SDK to npm through the `npm` environment with trusted publishing (no token) and uploads to the Chrome Web Store |
 
 Chrome Web Store upload (API V2) runs only when the `chrome-web-store` environment has the variables `GCP_WIF_PROVIDER`, `CWS_SERVICE_ACCOUNT`, `CWS_PUBLISHER_ID`, `CWS_EXTENSION_ID`. CI signs in through Workload Identity Federation as the `cws-publisher` service account, so no secret is stored; that service account must be added in the Chrome Web Store Developer Dashboard. A successful upload means the item was **submitted for review**, not published.
 
-Releasing is therefore: merge PRs with conventional commit titles → merge the Release PR → approve the `npm` and `chrome-web-store` deployments in the Actions run. Commits that are not conventional (`ai(T4): …`, merge commits) do not appear in the CHANGELOG. GitHub does not run CI on the Release PR itself because GITHUB_TOKEN opened it; `release.yml` runs the full test suite before publishing.
+Releasing is therefore automatic: merge a PR with a `feat:` or `fix:` title into `main` → a new version is tagged and built → approve the `npm` and `chrome-web-store` deployments in the Actions run. `docs:`, `test:`, `ci:` and `chore:` commits wait for the next release. Commits that are not conventional (`ai(T4): …`, merge commits) do not appear in the CHANGELOG. `release.yml` runs the full test suite before publishing.
 
 SDK publication (`@tdduydev/browser-print`, MIT): [EN](docs/SDK-RELEASE.md) / [VI](docs/vi/SDK-RELEASE.md).
 
