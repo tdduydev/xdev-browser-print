@@ -11,7 +11,7 @@ Run date: 2026-10-08 · Machine: macOS 27.0.1 · Node 26.10.0 · pnpm 10.34.6 ·
 | Unit — core | Vitest 3.2.7 (node) | 70 | 70 passed |
 | Unit + integration — extension | Vitest 3.2.7 (jsdom) | 54 | 54 passed |
 | Unit + integration — SDK | Vitest 3.2.7 (jsdom) | 18 | 18 passed |
-| E2E — real extension in Chromium | Playwright 1.64.0 | 19 | 19 passed |
+| E2E — real extension in Chromium | Playwright 1.64.0 | 22 | 22 passed |
 | Lint | ESLint 9.39.5 | — | 0 errors |
 | Typecheck (test files included) | TypeScript 5.9.3 strict | — | 0 errors |
 
@@ -29,7 +29,7 @@ pnpm exec playwright install chromium   # first time
 pnpm lint
 pnpm typecheck
 pnpm test        # unit + integration (142 tests)
-pnpm test:e2e    # builds the SDK, the React demo and the e2e extension, then runs Playwright (19 tests)
+pnpm test:e2e    # builds the SDK, the React demo and the e2e extension, then runs Playwright (22 tests)
 ```
 
 ## 3. Scope per level
@@ -91,6 +91,7 @@ pnpm test:e2e    # builds the SDK, the React demo and the e2e extension, then ru
 | JOB-17 | Cancel a `WAITING_PERMISSION` job; cancel a finished job | `CANCELLED` / `INVALID_REQUEST` | `job-manager.test.ts` |
 | JOB-18 | History over `historyLimit` | Only the configured number kept | `job-manager.test.ts` |
 | JOB-19 | Print history | No document content (unit: payload deleted; e2e: patient name absent from data and UI) | unit + e2e |
+| JOB-20 | Site has "Ask before every print" on; approve, deny, or close the approval window | Job waits in `WAITING_PERMISSION` with no print window; approve → exactly one print window, `UNKNOWN`/`PRINT_DIALOG_CLOSED`; deny or close → `CANCELLED`/`USER_DENIED`, SDK error `PERMISSION_DENIED`, no print window | e2e |
 
 ### 4.3 Service worker stop / extension restart
 
@@ -100,6 +101,7 @@ pnpm test:e2e    # builds the SDK, the React demo and the e2e extension, then ru
 | SW-02 | Restart while the print window is open | Job stays `DISPATCHING`; the window's result is applied; a second late report is ignored | `job-manager.test.ts` |
 | SW-03 | Real worker stopped via CDP `ServiceWorker.stopAllWorkers` | A new worker starts (in-memory marker gone); the next request succeeds | e2e |
 | SW-04 | SDK misses events | SDK polls every 2 s and gets the result | `client.test.ts` |
+| SW-05 | Real worker stopped via CDP while the per-job approval window is open; then Allow is clicked on the stale window | New worker cancels the job (`CANCELLED`/`INTERRUPTED_BY_RESTART`, SDK error `JOB_CANCELLED`); the late Allow has no effect; no print window opens | e2e |
 
 ### 4.4 USB / Serial (fake devices)
 
@@ -128,6 +130,7 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | UI-01 | Open the options page | "Tổng quan" heading (Vietnamese by default); all 8 navigation items work |
 | UI-02 | Create an A5 profile and map `PRESCRIPTION` through the UI | Tables show the profile and mapping; configuration saved |
 | UI-03 | Manifest | MV3, module service worker, no static `content_scripts` |
+| UI-04 | Tick "Ask before every print" for an existing site on the Sites screen | Checkbox shows ticked; `confirmEachJob = true` saved in the site grant; the next job opens the approval window | e2e |
 
 ### 4.6 Extension popup (e2e)
 
@@ -151,5 +154,4 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | WebUSB/Web Serial with real printers (K80, K58, label) | No devices in CI | BP-13 |
 | Windows e2e | Unit tests pass on Windows in CI; browser e2e runs on Linux (CI) and macOS (local) only | BP-12 |
 | Real `chrome.permissions.request` prompt | Playwright cannot click Chrome's prompt; the e2e build pre-grants localhost | BP-13 |
-| `confirmEachJob` in real Chrome | Integration tests only | BP-10 |
 | Coverage | Tool not installed | BP-10 |

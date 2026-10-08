@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { A5_PROFILE, EXTENSION_DIR, configure, expect, internal, openSite, startSite, test } from './fixtures';
+import { A5_PROFILE, EXTENSION_DIR, configure, countPrintWindows, enableConfirmEachJob, expect, internal, openSite, startSite, test } from './fixtures';
 
 type Win = Window & { XDevBrowserPrint: new (o?: object) => any };
 
@@ -142,6 +142,62 @@ test.describe('website security', () => {
 });
 
 test.describe('printing', () => {
+  test('confirmEachJob: enabled in Sites, approving the job prints it once', async ({ context, admin, site }) => {
+    const printWindows = countPrintWindows(context);
+    await configure(admin, site.origin);
+    await enableConfirmEachJob(admin, site.origin);
+    const page = await openSite(context, `${site.origin}/`);
+    const approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    const result = page.evaluate(async () => {
+      const c = new (window as unknown as Win).XDevBrowserPrint();
+      await c.connect();
+      return c.print({ documentType: 'PRESCRIPTION', format: 'HTML', data: '<h1>approved</h1>' });
+    });
+    const win = await approval;
+    await expect(win.getByTestId('approve-origin')).toHaveText(site.origin);
+    await expect.poll(async () => (await internal<{ state: string }[]>(admin, 'jobs.list', { limit: 10 }))[0]?.state).toBe('WAITING_PERMISSION');
+    expect(printWindows()).toBe(0); // nothing prints before the user answers
+    await win.getByTestId('approve-allow').click();
+    expect(await result).toMatchObject({ state: 'UNKNOWN', outcome: 'PRINT_DIALOG_CLOSED' });
+    await page.waitForTimeout(2500); // print window auto-closes after 1.5 s; let any late window appear
+    expect(printWindows()).toBe(1);
+    const jobs = await internal<{ state: string }[]>(admin, 'jobs.list', { limit: 10 });
+    expect(jobs).toHaveLength(1);
+  });
+
+  test('confirmEachJob: denying or closing the approval window cancels with PERMISSION_DENIED', async ({ context, admin, site }) => {
+    const printWindows = countPrintWindows(context);
+    await configure(admin, site.origin);
+    await enableConfirmEachJob(admin, site.origin);
+    const page = await openSite(context, `${site.origin}/`);
+    const request = () => page.evaluate(async () => {
+      const c = new (window as unknown as Win).XDevBrowserPrint();
+      await c.connect();
+      return c.print({ documentType: 'PRESCRIPTION', format: 'HTML', data: '<p>approval required</p>' }).then(
+        () => ({ code: 'resolved' }),
+        (e: { code: string; job?: { state: string; outcome?: string; errorCode?: string } }) => ({ code: e.code, ...e.job }),
+      );
+    });
+    const denied = { code: 'PERMISSION_DENIED', state: 'CANCELLED', outcome: 'USER_DENIED', errorCode: 'PERMISSION_DENIED' };
+
+    let approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    let result = request();
+    await (await approval).getByTestId('approve-deny').click();
+    expect(await result).toMatchObject(denied);
+
+    approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    result = request();
+    const win = await approval;
+    await expect(win.getByTestId('approve-deny')).toBeVisible();
+    await win.close();
+    expect(await result).toMatchObject(denied);
+
+    await page.waitForTimeout(2000);
+    expect(printWindows()).toBe(0);
+    const jobs = await internal<{ state: string; outcome?: string }[]>(admin, 'jobs.list', { limit: 10 });
+    expect(jobs.map((j) => [j.state, j.outcome])).toEqual([['CANCELLED', 'USER_DENIED'], ['CANCELLED', 'USER_DENIED']]);
+  });
+
   test('HTML job opens the print window and ends UNKNOWN/PRINT_DIALOG_CLOSED', async ({ context, admin, site }) => {
     await configure(admin, site.origin);
     const page = await openSite(context, `${site.origin}/`);
@@ -247,6 +303,40 @@ test.describe('resilience', () => {
     expect(results.at(-1)).toBe('ok:1');
     const fresh = context.serviceWorkers().at(-1)!;
     expect(await fresh.evaluate(() => (globalThis as { __marker?: number }).__marker)).toBeUndefined();
+  });
+
+  test('stopping the service worker while the approval window is open cancels the job and never prints it', async ({ context, admin, site }) => {
+    const printWindows = countPrintWindows(context);
+    await configure(admin, site.origin);
+    await enableConfirmEachJob(admin, site.origin);
+    const page = await openSite(context, `${site.origin}/`);
+    const approval = context.waitForEvent('page', (p) => p.url().includes('approve.html'));
+    const result = page.evaluate(async () => {
+      const c = new (window as unknown as Win).XDevBrowserPrint();
+      await c.connect();
+      return c.print({ documentType: 'PRESCRIPTION', format: 'HTML', data: '<h1>stale approval</h1>' }).then(
+        () => ({ code: 'resolved' }),
+        (e: { code: string; job?: { state: string; outcome?: string } }) => ({ code: e.code, ...e.job }),
+      );
+    });
+    const win = await approval;
+    await expect(win.getByTestId('approve-allow')).toBeEnabled();
+
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('ServiceWorker.enable');
+    await cdp.send('ServiceWorker.stopAllWorkers');
+
+    // The pending approval lived in the old worker's memory; the new worker's recover()
+    // cancels the WAITING_PERMISSION job instead of guessing what the user wanted.
+    // The SDK's 2 s poll is what wakes the new worker and reads the result.
+    expect(await result).toMatchObject({ code: 'JOB_CANCELLED', state: 'CANCELLED', outcome: 'INTERRUPTED_BY_RESTART' });
+
+    // A late click on the stale window must not revive the job.
+    await win.getByTestId('approve-allow').click();
+    await page.waitForTimeout(2500);
+    expect(printWindows()).toBe(0);
+    const jobs = await internal<{ state: string; outcome?: string }[]>(admin, 'jobs.list', { limit: 10 });
+    expect(jobs.map((j) => [j.state, j.outcome])).toEqual([['CANCELLED', 'INTERRUPTED_BY_RESTART']]);
   });
 
   test('rate limit stops print spam from one site', async ({ context, admin, site }) => {
