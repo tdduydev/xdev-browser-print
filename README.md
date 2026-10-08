@@ -12,6 +12,7 @@ Tiếng Việt: [docs/vi](docs/vi/ARCHITECTURE.md)
 | `packages/browser-print-sdk` | SDK `@xdev/browser-print` and the `useBrowserPrint` hook |
 | `packages/core` | Shared logic: origins, configuration, router, job states, encoders |
 | `packages/shared-types` | Types and protocol |
+| `examples/react-demo` | Vite + React example app using `useBrowserPrint` ([README](examples/react-demo/README.md)) |
 | `tests/e2e` | Playwright e2e on real Chromium |
 | `docs` | Design documents |
 

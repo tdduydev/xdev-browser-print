@@ -9,7 +9,7 @@ Ngày chạy: 2026-10-08 · Máy: macOS 27.0.1 · Node 26.10.0 · pnpm 10.34.6 �
 | Unit — core | Vitest 3.2.7 (node) | 70 | 70 đạt |
 | Unit + integration — extension | Vitest 3.2.7 (jsdom) | 54 | 54 đạt |
 | Unit + integration — SDK | Vitest 3.2.7 (jsdom) | 18 | 18 đạt |
-| E2E — extension thật trong Chromium | Playwright 1.64.0 | 16 | 16 đạt |
+| E2E — extension thật trong Chromium | Playwright 1.64.0 | 19 | 19 đạt |
 | Lint | ESLint 9.39.5 | — | 0 lỗi |
 | Typecheck (gồm cả file test) | TypeScript 5.9.3 strict | — | 0 lỗi |
 
@@ -25,7 +25,7 @@ pnpm exec playwright install chromium   # lần đầu
 pnpm lint
 pnpm typecheck
 pnpm test        # unit + integration (142 test)
-pnpm test:e2e    # build SDK + extension bản e2e, rồi chạy Playwright (18 test)
+pnpm test:e2e    # build SDK, demo React và extension bản e2e, rồi chạy Playwright (19 test)
 ```
 
 ## 3. Phạm vi các cấp test
@@ -131,6 +131,12 @@ File: `apps/extension/test/adapters.test.ts`. Các test này dùng thiết bị 
 |---|---|---|
 | POP-01 | Mở popup trên localhost chưa ghép nối, ghép nối rồi thu hồi | Hiện nút ghép nối; grant hiển thị `read` + `print`; thu hồi trở về trạng thái chưa ghép nối |
 | POP-02 | Mở popup trên `chrome://settings` | Hiện `popup.unsupportedPage`, không thể ghép nối |
+
+### 4.7 Demo React (e2e)
+
+| ID | Test case | Kết quả mong đợi | File |
+|---|---|---|---|
+| DEMO-01 | Phục vụ bản build `examples/react-demo` trên localhost, website đã được cho phép, bấm **Connect** rồi **Print** đơn thuốc A5 | Trạng thái `ready` → `connected`, có máy in; cửa sổ in hiển thị HTML; job hiện `UNKNOWN` / `PRINT_DIALOG_CLOSED` | `tests/e2e/react-demo.spec.ts` |
 
 ## 5. Chưa kiểm thử
 
