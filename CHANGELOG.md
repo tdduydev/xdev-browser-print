@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.1...v0.3.2) (2026-10-08)
+
+
+### Bug Fixes
+
+* **ci:** publish the SDK tarball with a ./ path ([8714c72](https://github.com/tdduydev/xdev-browser-print/commit/8714c722e9186ac549445ee648c93e6a53fc718e))
+* **ci:** publish the SDK tarball with a ./ path ([a228061](https://github.com/tdduydev/xdev-browser-print/commit/a228061be89b66d5e1ef7f5a9e4b869622a82adb))
+
 ## [0.3.1](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.0...v0.3.1) (2026-10-08)
 
 
