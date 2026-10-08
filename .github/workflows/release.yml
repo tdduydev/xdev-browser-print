@@ -76,22 +76,33 @@ jobs:
     runs-on: ubuntu-latest
     # Protected environment: add required reviewers in repo settings so a human approves each upload.
     environment: chrome-web-store
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: extension-zip
           path: release/
+      # Workload Identity Federation: a short-lived token for the cws-publisher service account, no stored key.
+      # The provider only accepts this repo's chrome-web-store environment.
+      - id: gcp
+        if: vars.CWS_SERVICE_ACCOUNT != ''
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.CWS_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
       - name: Upload and submit for review
         env:
-          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
-          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
-          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
-          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
-          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CWS_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
         run: node scripts/publish-cws.mjs "release/xdev-browser-print-${GITHUB_REF_NAME#v}.zip"
 
   npm-publish:

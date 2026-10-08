@@ -1,19 +1,19 @@
 // Uploads a release ZIP to the Chrome Web Store and submits it for review (CWS API V2).
 // V1 (v1.1) support ends 2026-10-15, hence V2: https://developer.chrome.com/blog/cws-api-v2
-// Credentials come only from environment variables (CI secrets); nothing is hardcoded.
+// CI passes a short-lived access token from Workload Identity Federation, so no long-lived credential exists.
 // Success here means "submitted for review" — Google decides when it is published.
 import { readFileSync } from 'node:fs';
 
 const zipPath = process.argv[2];
-const { CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN, CWS_PUBLISHER_ID, CWS_EXTENSION_ID } = process.env;
+const { CWS_ACCESS_TOKEN, CWS_PUBLISHER_ID, CWS_EXTENSION_ID } = process.env;
 
 if (!zipPath) {
   console.error('usage: node scripts/publish-cws.mjs <zip>');
   process.exit(1);
 }
-if (!CWS_CLIENT_ID || !CWS_CLIENT_SECRET || !CWS_REFRESH_TOKEN || !CWS_PUBLISHER_ID || !CWS_EXTENSION_ID) {
-  // Missing credentials is a configuration state, not a failure of the release.
-  console.log('publish-cws: Chrome Web Store secrets not configured — skipping upload.');
+if (!CWS_ACCESS_TOKEN || !CWS_PUBLISHER_ID || !CWS_EXTENSION_ID) {
+  // Missing configuration is a setup state, not a failure of the release.
+  console.log('publish-cws: Chrome Web Store not configured (CWS_SERVICE_ACCOUNT, CWS_PUBLISHER_ID, CWS_EXTENSION_ID) — skipping upload.');
   process.exit(0);
 }
 
@@ -27,16 +27,7 @@ async function call(url, init, label) {
   return body;
 }
 
-const token = await call(
-  'https://oauth2.googleapis.com/token',
-  {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ client_id: CWS_CLIENT_ID, client_secret: CWS_CLIENT_SECRET, refresh_token: CWS_REFRESH_TOKEN, grant_type: 'refresh_token' }),
-  },
-  'OAuth token',
-);
-const auth = { authorization: `Bearer ${token.access_token}` };
+const auth = { authorization: `Bearer ${CWS_ACCESS_TOKEN}` };
 const item = `publishers/${CWS_PUBLISHER_ID}/items/${CWS_EXTENSION_ID}`;
 const api = 'https://chromewebstore.googleapis.com';
 
