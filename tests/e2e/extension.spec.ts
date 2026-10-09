@@ -63,11 +63,27 @@ test.describe('extension popup', () => {
     await expect(popup.getByText('Chưa được phép')).toBeVisible();
   });
 
-  test('unsupported browser pages show the unsupported-page message', async ({ context, extensionId }) => {
-    const popup = await openPopup(context, extensionId, 'chrome://settings');
-    await expect(popup.getByText('Trang này không thể ghép nối (chỉ https hoặc localhost).')).toBeVisible();
-    await expect(popup.getByRole('button', { name: 'Cho phép website này' })).toHaveCount(0);
+  test('a failed revoke is shown instead of ignored', async ({ context, extensionId, site, admin }) => {
+    await internal(admin, 'sites.add', { origin: site.origin, scopes: ['read', 'print'], confirmEachJob: false });
+    const popup = await context.newPage();
+    await popup.addInitScript((url) => {
+      chrome.tabs.query = async () => [{ url } as chrome.tabs.Tab];
+      const send = chrome.runtime.sendMessage.bind(chrome.runtime) as (m: unknown) => Promise<unknown>;
+      chrome.runtime.sendMessage = (async (m: { type?: string }) =>
+        m?.type === 'sites.remove' ? { ok: false, error: { code: 'INTERNAL_ERROR', message: 'storage failed' } } : send(m)) as typeof chrome.runtime.sendMessage;
+    }, site.origin);
+    await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+    await popup.getByRole('button', { name: 'Thu hồi' }).click();
+    await expect(popup.getByText('INTERNAL_ERROR: storage failed')).toBeVisible();
   });
+
+  for (const url of ['chrome://settings', 'http://example.com/page']) {
+    test(`unsupported page ${url} shows the unsupported-page message`, async ({ context, extensionId }) => {
+      const popup = await openPopup(context, extensionId, url);
+      await expect(popup.getByText('Trang này không thể ghép nối (chỉ https hoặc localhost).')).toBeVisible();
+      await expect(popup.getByRole('button', { name: 'Cho phép website này' })).toHaveCount(0);
+    });
+  }
 });
 
 test.describe('website security', () => {

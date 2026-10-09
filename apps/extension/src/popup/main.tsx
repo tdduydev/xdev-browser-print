@@ -46,7 +46,7 @@ function Popup() {
             {grant ? (
               <>
                 <span className="badge ok">{t('popup.allowed')} · {grant.scopes.join(', ')}</span>
-                <p><button className="danger" onClick={() => void callBackground('sites.remove', { origin: pairable! })}>{t('sites.remove')}</button></p>
+                <p><button className="danger" onClick={() => callBackground('sites.remove', { origin: pairable! }).catch((e: unknown) => setError(errorText(e)))}>{t('sites.remove')}</button></p>
               </>
             ) : (
               <>
