@@ -8,25 +8,25 @@ Mức độ:
 
 Không tính năng nào được nâng mức chỉ dựa vào mock test.
 
-Cập nhật: 2026-10-08.
+Cập nhật: 2026-10-10.
 
 ## Tính năng × hệ điều hành
 
 | Tính năng | macOS | Windows 10/11 | Linux |
 |---|---|---|---|
-| Cài extension, service worker, giao diện quản trị | Verified on Browser (Chromium 156 headless, e2e) | Implemented (unit test đạt trên CI) | Verified on Browser (e2e trên CI, `ubuntu-latest`) |
-| Ghép nối website, scope, cửa sổ duyệt, thu hồi | Verified on Browser (e2e) | Implemented | Verified on Browser (e2e trên CI) |
-| Chống replay, trùng job, rate limit | Verified on Browser (e2e) | Implemented | Verified on Browser (e2e trên CI) |
-| Service worker restart | Verified on Browser (e2e, CDP stop) | Implemented | Verified on Browser (e2e trên CI) |
-| HTML → cửa sổ in (làm sạch, sandbox) | Verified on Browser (headless; hộp thoại chưa hiện) | Implemented | Verified on Browser (e2e trên CI) |
-| PDF → cửa sổ in | Verified on Browser (headless; job tới trạng thái cuối) | Implemented | Verified on Browser (e2e trên CI) |
+| Cài extension, service worker, giao diện quản trị | Verified on Browser (Chromium 156 headless, e2e, CI `macos-latest`) | Verified on Browser (e2e trên CI, `windows-latest`) | Verified on Browser (e2e trên CI, `ubuntu-latest`) |
+| Ghép nối website, scope, cửa sổ duyệt, thu hồi | Verified on Browser (e2e, CI `macos-latest`) | Verified on Browser (e2e trên CI, `windows-latest`) | Verified on Browser (e2e trên CI) |
+| Chống replay, trùng job, rate limit | Verified on Browser (e2e, CI `macos-latest`) | Verified on Browser (e2e trên CI, `windows-latest`) | Verified on Browser (e2e trên CI) |
+| Service worker restart | Verified on Browser (e2e, CDP stop, CI `macos-latest`) | Verified on Browser (e2e trên CI, `windows-latest`) | Verified on Browser (e2e trên CI) |
+| HTML → cửa sổ in (làm sạch, sandbox) | Verified on Browser (headless; hộp thoại chưa hiện, CI `macos-latest`) | Verified on Browser (e2e trên CI, `windows-latest`) | Verified on Browser (e2e trên CI) |
+| PDF → cửa sổ in | Verified on Browser (headless; job tới trạng thái cuối, CI `macos-latest`) | Verified on Browser (e2e trên CI, `windows-latest`) | Verified on Browser (e2e trên CI) |
 | Hộp thoại in Chrome, chọn máy in | Chưa kiểm | Chưa kiểm | Chưa kiểm |
 | In không hộp thoại bằng `--kiosk-printing` | UNKNOWN (một nhà cung cấp nói không hỗ trợ) | Có tài liệu của bên thứ ba, chưa kiểm | UNKNOWN |
 | WebUSB → ESC/POS (K80/K58) | Implemented | Implemented (thường cần driver WinUSB) | Implemented (cần udev rule, gỡ `usblp`) |
 | WebUSB → ZPL/TSPL (tem) | Implemented | Implemented | Implemented |
 | Web Serial → ESC/POS/ZPL/TSPL | Implemented | Implemented | Implemented |
 
-Kết quả Linux lấy từ CI run 37777305750 (PR #2, 2026-10-08). Windows có unit test trên CI, chưa có e2e trình duyệt.
+Kết quả Linux lần đầu lấy từ CI run 37777305750 (PR #2, 2026-10-08). Từ CI run 37967807810 (PR #25, 2026-10-10), bộ e2e trình duyệt chạy trên `ubuntu-latest`, `windows-latest` và `macos-latest` ở mọi push và PR.
 
 ## Thiết bị đã xác minh
 

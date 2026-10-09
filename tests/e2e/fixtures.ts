@@ -1,6 +1,6 @@
 import { createServer, type Server } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, sep } from 'node:path';
 import { test as base, chromium, type BrowserContext, type Page, type Worker } from '@playwright/test';
 
 const ROOT = join(import.meta.dirname, '..', '..');
@@ -17,7 +17,8 @@ export function startSite(siteDir = SITE_DIR): Promise<{ server: Server; port: n
     const url = new URL(req.url ?? '/', 'http://x');
     const [dir, rel] = url.pathname.startsWith('/sdk/') ? [SDK_DIR, url.pathname.slice(5)] : [siteDir, url.pathname === '/' ? 'index.html' : url.pathname.slice(1)];
     const file = normalize(join(dir, rel));
-    if (!file.startsWith(dir)) return res.writeHead(403).end();
+    // `dir + sep` so a sibling like `site-evil` is rejected and Windows `\` paths compare consistently.
+    if (file !== dir && !file.startsWith(dir + sep)) return res.writeHead(403).end();
     try {
       const body = await readFile(file);
       res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' }).end(body);
