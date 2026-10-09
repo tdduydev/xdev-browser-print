@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.2...v0.3.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* show popup revoke errors; fold typographic punctuation in ascii text ([ecbdf39](https://github.com/tdduydev/xdev-browser-print/commit/ecbdf39aee5d3338839007dbf474e070e4a0f1db))
+* show popup revoke errors; fold typographic punctuation in ascii text ([12a86ce](https://github.com/tdduydev/xdev-browser-print/commit/12a86ce875ae309b13fea2c5a381fde09e2c4a2d))
+
 ## [0.3.2](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.1...v0.3.2) (2026-10-08)
 
 
