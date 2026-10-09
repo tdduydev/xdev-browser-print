@@ -59,6 +59,15 @@ describe('buildRawBytes', () => {
     const out = buildRawBytes({ jobId: 'j', kind: 'text', text: '^XA^FDĐơn^FS^XZ' }, 'ZPL', k80(), 1);
     expect(new TextDecoder().decode(out)).toBe('^XA^FDDon^FS^XZ');
   });
+
+  it('selects the profile code page before ESC/POS text, but leaves raw bytes alone', () => {
+    const vi = k80({ autoCut: false, encoding: 'cp1258', escposCodePage: 52 });
+    expect(Array.from(buildRawBytes({ jobId: 'j', kind: 'text', text: 'ế' }, 'ESCPOS', vi, 1))).toEqual([0x1b, 0x74, 52, 0xea, 0xec]);
+    // ESC @ resets the code page, so it is selected again right after.
+    expect(Array.from(buildRawBytes({ jobId: 'j', kind: 'text', text: '\x1b@ế' }, 'ESCPOS', vi, 1))).toEqual([0x1b, 0x74, 52, 0x1b, 0x40, 0x1b, 0x74, 52, 0xea, 0xec]);
+    expect(Array.from(buildRawBytes({ jobId: 'j', kind: 'bytes', bytes: Uint8Array.from([1]) }, 'ESCPOS', vi, 1))).toEqual([1]);
+    expect(Array.from(buildRawBytes({ jobId: 'j', kind: 'text', text: 'a' }, 'TSPL', vi, 1))).toEqual([0x61]);
+  });
 });
 
 describe('WebUsbPrintAdapter', () => {

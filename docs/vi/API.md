@@ -70,6 +70,26 @@ const job = await printer.print({
 - Kết quả `UNKNOWN` + `PRINT_DIALOG_CLOSED`: hộp thoại in Chrome đã đóng. Chrome không cho biết người dùng bấm In hay Huỷ.
 - Job `FAILED` hoặc `CANCELLED` → `print()` ném `PrintJobError` (có `error.job`).
 
+### Tạo byte ESC/POS
+
+`EscPosBuilder` tạo byte hoá đơn ngay trong trang, có cả mã QR. Gửi với `ESCPOS`:
+
+```ts
+import { EscPosBuilder } from '@tdduydev/browser-print';
+
+const bytes = new EscPosBuilder('cp1258', 52) // mã hoá ký tự, rồi ESC t n (tuỳ chọn, tuỳ hãng)
+  .align('center').bold(true).line('Phòng khám An Bình').bold(false)
+  .align('left').line('Đơn thuốc #1024')
+  .qr('https://example.com/rx/1024', { size: 6, ecc: 'M' })
+  .feed(3).cut()
+  .build();
+await printer.print({ documentType: 'RECEIPT', format: 'ESCPOS', data: bytes });
+```
+
+- Mã hoá: `ascii` (tiếng Việt không dấu, máy nào cũng in được), `cp1258` (Windows-1258, máy phải có code page WPC1258; Epson là số 52), `latin1`, `utf-8` (chỉ máy có firmware đọc UTF-8).
+- `qr()` dùng lệnh Epson `GS ( k` model 2. Phần lớn máy ESC/POS tương thích có hỗ trợ; kiểm tra bằng hoá đơn in thử của extension.
+- Nếu gửi chuỗi text (không phải byte), extension tự mã hoá theo **Mã hoá ký tự** và **Code page ESC/POS** của cấu hình máy in.
+
 ## Lỗi
 
 | Class | Mã lỗi |

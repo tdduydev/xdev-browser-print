@@ -10,7 +10,7 @@ export type PrintFormat = (typeof PRINT_FORMATS)[number];
 export const DOCUMENT_FORMATS: readonly PrintFormat[] = ['PDF', 'HTML'];
 export const RAW_FORMATS: readonly PrintFormat[] = ['ESCPOS', 'ZPL', 'TSPL', 'RAW'];
 
-export const TEXT_ENCODINGS = ['utf-8', 'ascii', 'latin1'] as const;
+export const TEXT_ENCODINGS = ['utf-8', 'ascii', 'latin1', 'cp1258'] as const;
 export type TextEncoding = (typeof TEXT_ENCODINGS)[number];
 
 export type Orientation = 'portrait' | 'landscape';
@@ -62,6 +62,11 @@ export interface PrinterProfile {
   copies: number;
   marginsMm: Margins;
   encoding: TextEncoding;
+  /**
+   * ESC/POS code page number sent as `ESC t n` before text. The number for a code page differs by
+   * vendor (Epson: 52 = WPC1258), so it is set per profile; unset means the printer's default.
+   */
+  escposCodePage?: number;
   autoCut: boolean;
   /** Dots per mm for label printers (8 = 203dpi, 12 = 300dpi, 24 = 600dpi). */
   barcodeDensity?: 6 | 8 | 12 | 24;

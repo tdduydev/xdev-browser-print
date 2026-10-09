@@ -72,6 +72,26 @@ const job = await printer.print({
 - `UNKNOWN` + `PRINT_DIALOG_CLOSED`: Chrome's print dialog closed. Chrome does not say whether the user printed or cancelled.
 - A `FAILED` or `CANCELLED` job makes `print()` throw `PrintJobError` (with `error.job`).
 
+### Building ESC/POS bytes
+
+`EscPosBuilder` makes receipt bytes in the page, including a QR code. Send them as `ESCPOS`:
+
+```ts
+import { EscPosBuilder } from '@tdduydev/browser-print';
+
+const bytes = new EscPosBuilder('cp1258', 52) // text encoding, then ESC t n (optional, vendor-specific)
+  .align('center').bold(true).line('Phòng khám An Bình').bold(false)
+  .align('left').line('Đơn thuốc #1024')
+  .qr('https://example.com/rx/1024', { size: 6, ecc: 'M' })
+  .feed(3).cut()
+  .build();
+await printer.print({ documentType: 'RECEIPT', format: 'ESCPOS', data: bytes });
+```
+
+- Text encodings: `ascii` (Vietnamese without diacritics, safe everywhere), `cp1258` (Windows-1258, needs the printer's WPC1258 code page; Epson's number is 52), `latin1`, `utf-8` (only printers whose firmware reads UTF-8).
+- `qr()` uses Epson `GS ( k` model 2. Most ESC/POS clones support it; check yours with the extension's test receipt.
+- Text sent as a string (not bytes) is encoded by the extension with the profile's **Text encoding** and **ESC/POS code page** instead.
+
 ## Errors
 
 | Class | Codes |

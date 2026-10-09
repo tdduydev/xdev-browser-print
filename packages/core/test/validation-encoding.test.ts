@@ -63,6 +63,17 @@ describe('text encoding', () => {
     expect(new TextDecoder().decode(encodeText('Đơn', 'utf-8'))).toBe('Đơn');
     expect(encodeText('é', 'latin1')).toEqual(Uint8Array.from([0xe9]));
   });
+
+  it('encodes Vietnamese in cp1258 with combining tone bytes, like Windows does', () => {
+    const bytes = encodeText('Phở bò, Nguyễn Thị Hương, Đà Nẵng · ệ', 'cp1258');
+    // Decoding with the platform's own windows-1258 decoder gives back the same text.
+    expect(new TextDecoder('windows-1258').decode(bytes).normalize('NFC')).toBe('Phở bò, Nguyễn Thị Hương, Đà Nẵng · ệ');
+    expect(Array.from(encodeText('ế', 'cp1258'))).toEqual([0xea, 0xec]);
+    expect(Array.from(encodeText('ợ', 'cp1258'))).toEqual([0xf5, 0xf2]);
+    expect(Array.from(encodeText('Ã', 'cp1258'))).toEqual([0x41, 0xde]);
+    expect(Array.from(encodeText('đ€', 'cp1258'))).toEqual([0xf0, 0x80]);
+    expect(Array.from(encodeText('中', 'cp1258'))).toEqual([0x3f]);
+  });
 });
 
 describe('ESC/POS', () => {
@@ -78,6 +89,28 @@ describe('ESC/POS', () => {
     const b = new EscPosBuilder('ascii').barcode128('AB').build();
     const i = b.indexOf(73);
     expect(b[i + 1]).toBe(4); // "{BAB"
+  });
+
+  it('selects the code page right after initialize when one is set', () => {
+    expect(Array.from(new EscPosBuilder('cp1258', 52).build())).toEqual([0x1b, 0x40, 0x1b, 0x74, 52]);
+    expect(Array.from(new EscPosBuilder('cp1258').build())).toEqual([0x1b, 0x40]);
+  });
+
+  it('builds a QR model 2 symbol with GS ( k', () => {
+    const b = Array.from(new EscPosBuilder().qr('AB', { size: 4, ecc: 'H' }).build());
+    expect(b).toEqual([
+      0x1b, 0x40,
+      0x1d, 0x28, 0x6b, 4, 0, 49, 65, 50, 0,
+      0x1d, 0x28, 0x6b, 3, 0, 49, 67, 4,
+      0x1d, 0x28, 0x6b, 3, 0, 49, 69, 51,
+      0x1d, 0x28, 0x6b, 5, 0, 49, 80, 48, 0x41, 0x42,
+      0x1d, 0x28, 0x6b, 3, 0, 49, 81, 48,
+      0x0a,
+    ]);
+    const long = Array.from(new EscPosBuilder().qr('x'.repeat(300)).build());
+    expect(long.slice(30, 32)).toEqual([303 & 0xff, 303 >> 8]);
+    expect(() => new EscPosBuilder().qr('')).toThrow(RangeError);
+    expect(() => new EscPosBuilder().qr('x'.repeat(7090))).toThrow(RangeError);
   });
 });
 
@@ -124,3 +157,4 @@ describe('paper and PDF', () => {
     expect(looksLikePdf(new Uint8Array([1, 2, 3, 4, 5]))).toBe(false);
   });
 });
+
