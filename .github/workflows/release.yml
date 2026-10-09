@@ -71,6 +71,9 @@ jobs:
           path: release-npm/*.tgz
           if-no-files-found: error
       - run: pnpm package
+      # A version-free copy keeps https://github.com/tdduydev/xdev-browser-print/releases/latest/download/xdev-browser-print.zip
+      # pointing at the newest build, for manual installs while a Chrome Web Store review is pending.
+      - run: cp "release/xdev-browser-print-${TAG#v}.zip" release/xdev-browser-print.zip
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: extension-zip
