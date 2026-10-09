@@ -55,7 +55,11 @@ describe('base64', () => {
 describe('text encoding', () => {
   it('folds Vietnamese diacritics for ascii printers', () => {
     expect(stripDiacritics('Đơn thuốc – Hóa đơn')).toBe('Don thuoc – Hoa don');
-    expect(Array.from(encodeText('Đơn–', 'ascii'))).toEqual([68, 111, 110, 0x3f]);
+    expect(Array.from(encodeText('Đơn–', 'ascii'))).toEqual([68, 111, 110, 0x2d]);
+    expect(Array.from(encodeText('Đơn€', 'ascii'))).toEqual([68, 111, 110, 0x3f]);
+    expect(new TextDecoder().decode(encodeText('K80 · “A4”…', 'ascii'))).toBe('K80 - "A4"...');
+    // latin1 keeps its own '·' (0xB7) and folds only what it cannot hold.
+    expect(Array.from(encodeText('·—', 'latin1'))).toEqual([0xb7, 0x2d]);
     expect(new TextDecoder().decode(encodeText('Đơn', 'utf-8'))).toBe('Đơn');
     expect(encodeText('é', 'latin1')).toEqual(Uint8Array.from([0xe9]));
   });
