@@ -205,6 +205,19 @@ function ProfileForm({ initial, isNew, onDone }: { initial: PrinterProfile; isNe
             {TEXT_ENCODINGS.map((x) => <option key={x}>{x}</option>)}
           </select>
         </label>
+        {(p.category === 'K80' || p.category === 'K58') && (
+          <label title={t('profiles.codePageHint')}>
+            {t('profiles.codePage')}
+            <input
+              type="number"
+              min={0}
+              max={255}
+              placeholder={t('profiles.codePageDefault')}
+              value={p.escposCodePage ?? ''}
+              onChange={(e) => set('escposCodePage', e.target.value === '' ? undefined : Number(e.target.value))}
+            />
+          </label>
+        )}
         {p.category === 'BARCODE' && (
           <label>
             {t('profiles.density')}

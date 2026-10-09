@@ -18,6 +18,8 @@ describe('validateProfile', () => {
     ['marginsMm', { marginsMm: { top: -1, right: 0, bottom: 0, left: 0 } }],
     ['encoding', { encoding: 'utf-16' as never }],
     ['barcodeDensity', { barcodeDensity: 10 as never }],
+    ['escposCodePage', { escposCodePage: 256 }],
+    ['escposCodePage', { escposCodePage: 1.5 }],
   ])('rejects invalid %s', (field, over) => {
     expect(() => validateProfile(profile(over))).toThrowError(expect.objectContaining({ code: 'INVALID_REQUEST', details: { field } }));
   });

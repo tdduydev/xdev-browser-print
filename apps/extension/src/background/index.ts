@@ -156,7 +156,7 @@ async function testPayload(profileId: string, kind: TestKind) {
         data: `<!doctype html><html><body style="font-family:sans-serif"><h1>xDev Browser Print</h1><p>Trang in thử / Test page</p><p>${label.replace(/</g, '&lt;')}</p><p>Tiếng Việt: Đơn thuốc – Hóa đơn – Phiếu khám</p></body></html>`,
       };
     case 'escpos':
-      return { format: 'ESCPOS' as const, dataEncoding: 'base64' as const, data: bytesToBase64(testReceipt({ encoding: p.encoding, widthChars: paper.widthMm <= 58 ? 32 : 48, autoCut: false, title: label })) };
+      return { format: 'ESCPOS' as const, dataEncoding: 'base64' as const, data: bytesToBase64(testReceipt({ encoding: p.encoding, codePage: p.escposCodePage, widthChars: paper.widthMm <= 58 ? 32 : 48, autoCut: false, title: label })) };
     case 'zpl':
       return { format: 'ZPL' as const, dataEncoding: 'text' as const, data: testZpl({ widthMm: paper.widthMm, heightMm: paper.heightMm ?? 30, dpmm: p.barcodeDensity ?? 8, text: label }) };
     case 'tspl':

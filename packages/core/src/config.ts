@@ -85,6 +85,7 @@ export function validateProfile(p: unknown): PrinterProfile {
     return typeof n !== 'number' || n < 0 || n > 100;
   })) fail('marginsMm');
   if (!TEXT_ENCODINGS.includes(v.encoding)) fail('encoding');
+  if (v.escposCodePage !== undefined && !(Number.isInteger(v.escposCodePage) && v.escposCodePage >= 0 && v.escposCodePage <= 255)) fail('escposCodePage');
   if (typeof v.autoCut !== 'boolean') fail('autoCut');
   if (v.barcodeDensity !== undefined && ![6, 8, 12, 24].includes(v.barcodeDensity)) fail('barcodeDensity');
   if (v.adapter === 'webusb' && v.device?.kind !== 'usb') fail('device');
