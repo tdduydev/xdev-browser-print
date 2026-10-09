@@ -16,7 +16,7 @@ import { BrowserPrintError, NotInstalledError, PrintJobError, UnsupportedCapabil
 import { PostMessageTransport } from './transport';
 
 // release-please rewrites the marked line on every release, keeping it equal to package.json.
-export const SDK_VERSION = '0.3.3'; // x-release-please-version
+export const SDK_VERSION = '0.4.0'; // x-release-please-version
 
 export interface XDevBrowserPrintOptions {
   /** Pin to one extension build; others answering on the page are ignored. */

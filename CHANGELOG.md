@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.3...v0.4.0) (2026-10-09)
+
+
+### Features
+
+* Vietnamese cp1258 encoding, ESC/POS code page, QR builder ([6da39fa](https://github.com/tdduydev/xdev-browser-print/commit/6da39fa220a7965157654547368c9ec0984e8249))
+
 ## [0.3.3](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.2...v0.3.3) (2026-10-09)
 
 
