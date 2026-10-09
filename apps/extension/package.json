@@ -7,7 +7,7 @@
     "build": "vite build && vite build -c vite.content.config.ts",
     "dev": "vite build --watch --mode development",
     "typecheck": "tsc -p tsconfig.json",
-    "build:e2e": "XDBP_E2E=1 vite build && XDBP_E2E=1 vite build -c vite.content.config.ts"
+    "build:e2e": "node scripts-build-e2e.mjs"
   },
   "dependencies": {
     "@xdev/core": "workspace:*",
