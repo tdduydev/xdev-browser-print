@@ -151,6 +151,7 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 | UI-02 | Create an A5 profile and map `PRESCRIPTION` through the UI | Tables show the profile and mapping; configuration saved |
 | UI-03 | Manifest | MV3, module service worker, no static `content_scripts` |
 | UI-04 | Tick "Ask before every print" for an existing site on the Sites screen | Checkbox shows ticked; `confirmEachJob = true` saved in the site grant; the next job opens the approval window | e2e |
+| UI-05 | Devices screen with a granted serial port, no profile: **Create K80 printer**, then **Test print** | A `webserial` profile bound to the port is saved; the message waits for the job and shows "The printer accepted all N bytes" | e2e |
 
 ### 4.6 Extension popup (e2e)
 
@@ -158,6 +159,7 @@ File: `apps/extension/test/adapters.test.ts`. These use fake devices, so they pr
 |---|---|---|
 | POP-01 | Open popup on unpaired localhost, pair it, then revoke it | Pair button appears; grant shows `read` + `print`; revoke returns to unpaired state |
 | POP-02 | Open popup on `chrome://settings` | `popup.unsupportedPage` appears and pairing is unavailable |
+| POP-03 | Popup **Test this printer** with the default A5 profile | Print window opens; the popup follows the job and shows "Print dialog closed" |
 
 ### 4.7 React demo (e2e)
 

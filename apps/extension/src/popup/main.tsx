@@ -4,13 +4,17 @@ import { normalizeOrigin } from '@xdev/core';
 import { allowSite } from '../lib/site-permission';
 import { callBackground } from '../lib/messages';
 import { t } from '../ui/i18n';
+import { TestResult } from '../ui/TestResult';
 import { errorText, useConfig } from '../ui/useBackground';
+import { defaultTestKind, useTestPrint } from '../ui/useTestPrint';
 import '../ui/styles.css';
 
 function Popup() {
   const { data } = useConfig();
   const [origin, setOrigin] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState('');
+  const { state, run } = useTestPrint();
 
   useEffect(() => {
     // activeTab exposes the URL of the tab the user opened the popup on, nothing else.
@@ -31,6 +35,8 @@ function Popup() {
     pairable = null;
   }
   const grant = pairable ? data.sites.find((s) => s.origin === pairable) : undefined;
+  const profiles = data.config.profiles;
+  const testProfile = profiles.find((p) => p.id === profileId) ?? profiles.find((p) => p.isDefault) ?? profiles[0];
 
   return (
     <div className="popup">
@@ -64,6 +70,24 @@ function Popup() {
           <p className="muted">{t('popup.unsupportedPage')}</p>
         )}
         {error && <div className="notice error" style={{ marginTop: 8 }}>{error}</div>}
+      </div>
+      <div className="card" style={{ margin: 0 }}>
+        <div className="muted">{t('popup.test')}</div>
+        {testProfile ? (
+          <>
+            <select value={testProfile.id} onChange={(e) => setProfileId(e.target.value)} aria-label={t('test.pick')} data-testid="popup-test-profile">
+              {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <p>
+              <button className="primary" disabled={state?.phase === 'running'} onClick={() => void run(testProfile.id, defaultTestKind(testProfile))} data-testid="popup-test">
+                {t('popup.testButton')}
+              </button>
+            </p>
+            <TestResult state={state} />
+          </>
+        ) : (
+          <p className="muted">{t('popup.noProfiles')}</p>
+        )}
       </div>
       <div className="row muted">
         {t('dash.profiles')}: {data.config.profiles.length} · {t('dash.mappings')}: {Object.keys(data.config.mappings).length}
