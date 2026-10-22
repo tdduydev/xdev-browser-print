@@ -32,6 +32,26 @@ pnpm test        # unit + integration (142 tests)
 pnpm test:e2e    # builds the SDK, the React demo and the e2e extension, then runs Playwright (22 tests)
 ```
 
+### Virtual printer lab
+
+`pnpm lab` builds the SDK, the demo and the e2e extension, then opens Chromium with three printers and no hardware:
+
+| Document | Profile | Printer |
+|---|---|---|
+| `PRESCRIPTION` (HTML) | `lab-a5`, `browser` | The real Chrome print dialog: pick **Save as PDF** or **Microsoft Print to PDF** |
+| `RECEIPT` (ESC/POS) | `lab-k80`, `webserial` | Virtual serial port that records every byte |
+| `LABEL` (ZPL) | `lab-label`, `webserial` | Same, second port |
+
+Each recorded job is written to `test-results/lab`: `<n>-<port>.bin` (exact bytes), `.txt` (the receipt as a K80 would print it, plus the ESC/POS commands; or the ZPL fields) and `.zpl`.
+
+```bash
+pnpm lab            # headed; print from the demo yourself, close the browser to stop
+pnpm lab --auto     # headed; prints the receipt and the label first
+pnpm lab --check    # headless; exits 1 unless both end SUBMITTED / BYTES_WRITTEN_TO_PORT with bytes on the port
+```
+
+The virtual port replaces `navigator.serial` in extension pages only, so everything from the SDK call to the adapter's write is real. It does not cover the OS serial driver, WebUSB, kiosk printing or paper output: those stay in BP-13 ([MANUAL-TEST.md](MANUAL-TEST.md)).
+
 ## 3. Scope per level
 
 | Level | Covers | Does not cover |
