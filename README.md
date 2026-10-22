@@ -30,7 +30,14 @@ A React app connects to the extension, the user approves the print scope once, a
 ![Options page job history with the prescription and receipt jobs](docs/images/showcase/08-admin-jobs.png)
 *Job history keeps metadata only: the prescription ends `UNKNOWN / PRINT_DIALOG_CLOSED`, the K80 receipt with no USB printer attached fails `DEVICE_NOT_FOUND`.*
 
+![Toolbar popup with the Test print block and the job result](docs/images/showcase/09-popup.png)
+*The toolbar popup: the site is allowed with `read, print`, and "Test this printer" follows the job to its result.*
+
+![Devices screen: a granted serial printer with its profile and a successful test print](docs/images/showcase/10-devices.png)
+*Devices: a granted USB-serial printer becomes a K80 profile in one click; its test print reports the bytes the printer accepted.*
+
 Verified: these screenshots come from an automated run (`SHOWCASE_OUT=docs/images/showcase pnpm showcase <app-dist>`, [scripts/showcase.mjs](scripts/showcase.mjs)) of a Vite + React app with `@tdduydev/browser-print@0.3.2` installed from npm, against the extension e2e build, on 2026-10-08. Demo data only (fake clinic and patient). All screenshots: [docs/images/showcase](docs/images/showcase).
+The popup and Devices captures were added on 2026-10-22 with the extension 0.5.0 e2e build: the popup is a fresh render placed over capture 06 of the same app, and the Devices step uses a stood-in granted serial port (Chrome's device chooser cannot be automated); the test print itself runs the shipped code.
 
 | Path | Contents |
 |---|---|

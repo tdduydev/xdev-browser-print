@@ -160,6 +160,26 @@ try {
   await context.addInitScript(() => {
     if (location.pathname.endsWith('/print.html') && window.top === window) window.close = () => undefined;
   });
+  // A granted USB-serial receipt printer for the Devices step. Chrome's chooser cannot be driven,
+  // so the port is stood in for in extension pages; everything from the job to writer.write is real.
+  await context.addInitScript(() => {
+    if (location.protocol !== 'chrome-extension:') return;
+    let writable = null;
+    const port = {
+      getInfo: () => ({ usbVendorId: 0x1a86, usbProductId: 0x7523 }),
+      open: async () => {
+        writable = new WritableStream();
+      },
+      close: async () => {
+        writable = null;
+      },
+      get writable() {
+        return writable;
+      },
+    };
+    const serial = { getPorts: async () => [port], requestPort: async () => port, addEventListener() {}, removeEventListener() {} };
+    Object.defineProperty(navigator, 'serial', { configurable: true, value: serial });
+  });
 
   const admin = await context.newPage();
   const optionsUrl = `chrome-extension://${extensionId}/options.html`;
@@ -284,7 +304,25 @@ try {
   await popup.goto(`chrome-extension://${extensionId}/popup.html`);
   await check('popup shows the site as allowed with read, print', () => expect(popup.getByText(/read, print|print, read/)).toBeVisible());
   await popup.waitForLoadState('networkidle');
-  await composite(context, '09-popup', 'The toolbar popup (real render, over the app): this origin is allowed with read, print and can be revoked.', appNow, await popup.locator('.popup').screenshot(), { x: 1280 - 340 - 24, y: 8, dim: false });
+  // One-click test print from the popup: the default A5 printer goes through the print window.
+  const testPrintOpened = context.waitForEvent('page', { predicate: (p) => p.url().includes('print.html'), timeout: TIMEOUT });
+  await popup.getByTestId('popup-test').click();
+  const testWin = await testPrintOpened;
+  await check('popup test print follows the job to its result', () => expect(popup.getByTestId('test-msg')).toHaveText(/Hộp thoại in đã đóng/));
+  await testWin.close();
+  await composite(context, '09-popup', 'The toolbar popup (real render, over the app): this origin is allowed with read, print, and "Test this printer" reports the job result.', appNow, await popup.locator('.popup').screenshot(), { x: 1280 - 340 - 24, y: 8, dim: false });
+  await popup.close();
+
+  // 9. Devices: a granted serial printer becomes a profile in one click, and its test print reports the bytes.
+  await admin.bringToFront();
+  await admin.goto(`${optionsUrl}#devices`);
+  await admin.reload();
+  const device = admin.getByTestId('device-serial:1a86:7523:0');
+  await check('devices screen lists the granted port with no printer yet', () => expect(device).toContainText('Chưa có máy in nào dùng thiết bị này'));
+  await device.getByRole('button', { name: 'Tạo máy in K80' }).click();
+  await device.getByRole('button', { name: 'In thử' }).click();
+  await check('device test print ends with the bytes the printer accepted', () => expect(admin.getByTestId('test-msg')).toHaveText(/Máy in đã nhận đủ \d+ byte/));
+  await shot(admin, '10-devices', 'Devices: a granted USB-serial printer became a K80 profile in one click; its test print reports the bytes the port accepted.');
 } catch (e) {
   failed = true;
   console.error(`\nFAILED after ${checks.length} checks: ${e?.message ?? e}`);

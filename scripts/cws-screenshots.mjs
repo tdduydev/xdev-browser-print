@@ -5,6 +5,9 @@
 // It loads the production build, not dist-e2e, so the screenshots show what is shipped.
 // The copy it loads gets host_permissions for the demo origins only because Playwright
 // cannot click Chrome's permission prompt; the real dist/ folder is never modified.
+// Devices: Chrome's device chooser cannot be driven either, so extension pages get demo granted
+// devices (two USB printers, one serial port). The screens, the profile lookup and the test print
+// that runs on the serial port are the shipped code.
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -119,6 +122,30 @@ function prepareExtension() {
   return dir;
 }
 
+/** Runs before every page script; only extension pages see the demo devices. */
+function installDemoDevices() {
+  if (location.protocol !== 'chrome-extension:') return;
+  const events = { addEventListener() {}, removeEventListener() {} };
+  const usb = (vendorId, productId, manufacturerName, productName) => ({ vendorId, productId, manufacturerName, productName, serialNumber: null, forget: async () => undefined });
+  const devices = [usb(0x0416, 0x5011, 'Xprinter', 'XP-80C'), usb(0x04b8, 0x0e28, 'EPSON', 'TM-T82III')];
+  let writable = null;
+  const port = {
+    getInfo: () => ({ usbVendorId: 0x0483, usbProductId: 0x5740 }),
+    open: async () => {
+      writable = new WritableStream();
+    },
+    close: async () => {
+      writable = null;
+    },
+    get writable() {
+      return writable;
+    },
+    forget: async () => undefined,
+  };
+  Object.defineProperty(navigator, 'usb', { configurable: true, value: { ...events, getDevices: async () => devices, requestDevice: async () => devices[0] } });
+  Object.defineProperty(navigator, 'serial', { configurable: true, value: { ...events, getPorts: async () => [port], requestPort: async () => port } });
+}
+
 async function internal(page, type, req = {}) {
   const r = await page.evaluate(([t, body]) => chrome.runtime.sendMessage({ type: t, ...body }), [type, req]);
   if (!r?.ok) throw new Error(`${type}: ${r?.error?.code} ${r?.error?.message}`);
@@ -148,6 +175,25 @@ async function seed(page, language) {
   );
 }
 
+function dropNonDemoJobs(page) {
+  return page.evaluate(
+    () =>
+      new Promise((resolve, reject) => {
+        const open = indexedDB.open('xdev-browser-print', 1);
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const tx = open.result.transaction('jobs', 'readwrite');
+          const store = tx.objectStore('jobs');
+          store.getAllKeys().onsuccess = (e) => {
+            for (const key of e.target.result) if (!String(key).startsWith('job-demo-')) store.delete(key);
+          };
+          tx.oncomplete = () => resolve(undefined);
+          tx.onerror = () => reject(tx.error);
+        };
+      }),
+  );
+}
+
 async function capture(language, locale, extensionDir) {
   const context = await chromium.launchPersistentContext('', {
     channel: 'chromium',
@@ -158,6 +204,7 @@ async function capture(language, locale, extensionDir) {
     timezoneId: 'Asia/Ho_Chi_Minh',
     args: [`--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`],
   });
+  await context.addInitScript(installDemoDevices);
   try {
     const sw = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
     const extensionId = new URL(sw.url()).host;
@@ -178,8 +225,16 @@ async function capture(language, locale, extensionDir) {
       await page.locator(`[data-testid="nav-${screen}"].active`).waitFor();
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(300); // lets async lists (devices, history) render
+      if (screen === 'test') {
+        // A real test print on the label printer's (demo) serial port, so the screen shows a result.
+        await page.getByTestId('test-profile').selectOption('printer-label');
+        await page.getByTestId('test-zpl').click();
+        await page.getByTestId('test-msg').filter({ hasText: /\d+ byte/ }).waitFor({ timeout: 20_000 });
+      }
       const file = join(OUT, `${language}-${String(i + 1).padStart(2, '0')}-${screen}.png`);
       await page.screenshot({ path: file, fullPage: false });
+      // The test job carries the real clock; drop it so the history capture stays the fixed demo set.
+      if (screen === 'test') await dropNonDemoJobs(page);
       files.push(file);
     }
     return files;

@@ -242,21 +242,21 @@ Không bao giờ đưa các giá trị này vào repo, vào memory của Hive ha
 
 ## 7. Ảnh chụp màn hình
 
-Tạo bằng `pnpm cws:screenshots` (`scripts/cws-screenshots.mjs`): build tiện ích bản phát hành, nạp một bản sao tạm vào Chromium của Playwright, tạo dữ liệu mẫu (trang `https://clinic.example.com` và `https://pharmacy.example.com`, ba cấu hình máy in, bốn gán chứng từ, sáu bản ghi lịch sử chỉ có thông tin) rồi chụp trang tuỳ chọn. Mọi file là PNG 1280×800; script báo lỗi nếu có file sai kích thước. Không dùng dữ liệu cá nhân thật.
+Tạo bằng `pnpm cws:screenshots` (`scripts/cws-screenshots.mjs`): build tiện ích bản phát hành, nạp một bản sao tạm vào Chromium của Playwright, tạo dữ liệu mẫu (trang `https://clinic.example.com` và `https://pharmacy.example.com`, ba cấu hình máy in, bốn gán chứng từ, sáu bản ghi lịch sử chỉ có thông tin, hai máy in USB và một cổng serial đã cấp quyền) rồi chụp trang tuỳ chọn. Hộp chọn thiết bị của Chrome không tự động hoá được, nên các thiết bị đã cấp quyền được giả lập trong trang của tiện ích. Ảnh In thử là kết quả của một lệnh in thử thật gửi tới cổng của máy in tem; lệnh này bị xoá khỏi lịch sử sau đó để ảnh Lịch sử in luôn giống nhau. Mọi file là PNG 1280×800; script báo lỗi nếu có file sai kích thước. Không dùng dữ liệu cá nhân thật.
 
 Bản sao tạm được thêm `host_permissions` cho đúng hai trang mẫu, vì Playwright không bấm được hộp thoại cấp quyền của Chrome. Thư mục `dist/` dùng để phát hành không bị sửa.
 
-Cửa hàng nhận tối đa 5 ảnh cho mỗi ngôn ngữ **[Chưa xác minh: giới hạn hiện tại]**. Thứ tự đề xuất: tổng quan, máy in, gán chứng từ, lịch sử in, website.
+Cửa hàng nhận tối đa 5 ảnh cho mỗi ngôn ngữ **[Chưa xác minh: giới hạn hiện tại]**. Thứ tự đề xuất: tổng quan, máy in, thiết bị, in thử, lịch sử in.
 
 | Màn hình | Tiếng Việt | Tiếng Anh | Đề xuất |
 |---|---|---|---|
 | Tổng quan | `docs/images/cws/vi-01-dashboard.png` | `docs/images/cws/en-01-dashboard.png` | Có |
 | Cấu hình máy in | `docs/images/cws/vi-02-profiles.png` | `docs/images/cws/en-02-profiles.png` | Có |
-| Gán chứng từ | `docs/images/cws/vi-03-mappings.png` | `docs/images/cws/en-03-mappings.png` | Có |
-| Thiết bị (WebUSB / Web Serial) | `docs/images/cws/vi-04-devices.png` | `docs/images/cws/en-04-devices.png` | Không: danh sách trống vì không cắm thiết bị thật |
-| In thử | `docs/images/cws/vi-05-test.png` | `docs/images/cws/en-05-test.png` | Tuỳ chọn |
+| Gán chứng từ | `docs/images/cws/vi-03-mappings.png` | `docs/images/cws/en-03-mappings.png` | Tuỳ chọn |
+| Thiết bị (WebUSB / Web Serial) | `docs/images/cws/vi-04-devices.png` | `docs/images/cws/en-04-devices.png` | Có: nút Tìm máy in USB, một thiết bị đã có máy in kèm nút In thử, một thiết bị có nút Tạo máy in K80 |
+| In thử | `docs/images/cws/vi-05-test.png` | `docs/images/cws/en-05-test.png` | Có: hiện kết quả của lệnh in thử |
 | Lịch sử in | `docs/images/cws/vi-06-history.png` | `docs/images/cws/en-06-history.png` | Có |
-| Website | `docs/images/cws/vi-07-sites.png` | `docs/images/cws/en-07-sites.png` | Có |
+| Website | `docs/images/cws/vi-07-sites.png` | `docs/images/cws/en-07-sites.png` | Tuỳ chọn |
 | Cài đặt | `docs/images/cws/vi-08-settings.png` | `docs/images/cws/en-08-settings.png` | Tuỳ chọn |
 
 Không chụp popup. Popup đọc địa chỉ tab đang mở, mà trong trình duyệt tự động thì tab đang mở chính là popup, nên nó chỉ hiện "trang không hỗ trợ".
