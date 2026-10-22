@@ -16,6 +16,10 @@ Mỗi màn hình hiện trạng thái extension (`detecting`, `not-installed`, `
 
 Mã nguồn: `src/App.tsx` (cách dùng hook), `src/documents.ts` (chứng từ mẫu).
 
+## Dùng thử trực tuyến
+
+Demo được đăng tại **https://browser-print.xdev.asia** (GitHub Pages, `.github/workflows/pages.yml`, build lại mỗi khi demo hoặc SDK trên `main` thay đổi). Cài extension, rồi cho phép `https://browser-print.xdev.asia` trên popup của extension và gán `PRESCRIPTION`, `RECEIPT` hoặc `LABEL` cho một máy in, như ở mục [Cấu hình extension](#cấu-hình-extension).
+
 ## Chạy
 
 ```bash
