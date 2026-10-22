@@ -8,6 +8,8 @@ A Chrome Extension (Manifest V3) and TypeScript SDK that let ReactJS web apps pr
 
 SDK on npm: [`@tdduydev/browser-print`](https://www.npmjs.com/package/@tdduydev/browser-print)
 
+Live demo: [browser-print.xdev.asia](https://browser-print.xdev.asia) (needs the extension; allow the site from the extension popup).
+
 ```bash
 npm install @tdduydev/browser-print
 ```
@@ -73,6 +75,7 @@ From source: open `chrome://extensions`, enable Developer mode, click **Load unp
 | Workflow | Trigger | Does |
 |---|---|---|
 | `ci.yml` | Push to `main`, pull requests | Lint, typecheck; unit tests on Ubuntu/Windows/macOS; build + release ZIP artifact; Playwright e2e |
+| `pages.yml` | Push to `main` touching the demo or packages | Builds `examples/react-demo` against the workspace SDK and deploys it to GitHub Pages (`browser-print.xdev.asia`) |
 | `release-please.yml` | Push to `main` | When the push has releasable commits (`feat:` → minor, `fix:` → patch while below 1.0), opens the Release PR (version in root, extension and SDK `package.json`, CHANGELOG), **merges it automatically**, tags `vX.Y.Z` and calls `release.yml` |
 | `release.yml` | Called by release-please, or a hand-pushed tag `v*.*.*` | Checks SDK/extension/tag versions, builds and verifies the SDK tarball, creates a GitHub Release, then publishes the SDK to npm through the `npm` environment with trusted publishing (no token) and uploads to the Chrome Web Store |
 

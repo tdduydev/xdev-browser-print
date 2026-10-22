@@ -16,6 +16,10 @@ Each screen shows the extension state (`detecting`, `not-installed`, `ready`, `c
 
 Source: `src/App.tsx` (hook usage), `src/documents.ts` (sample documents).
 
+## Try it online
+
+The demo is published at **https://browser-print.xdev.asia** (GitHub Pages, `.github/workflows/pages.yml`, rebuilt on every change to the demo or the SDK on `main`). Install the extension, then allow `https://browser-print.xdev.asia` from the extension popup and map `PRESCRIPTION`, `RECEIPT` or `LABEL` to a printer, as in [Set up the extension](#set-up-the-extension).
+
 ## Run it
 
 ```bash
