@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/tdduydev/xdev-browser-print/compare/v0.4.0...v0.5.0) (2026-10-22)
+
+
+### Features
+
+* **extension:** one-click test print and printer detection ([495605c](https://github.com/tdduydev/xdev-browser-print/commit/495605c7c79f33ae557a4129338dc7bb64ce9285))
+* **extension:** one-click test print and printer detection ([bafdb12](https://github.com/tdduydev/xdev-browser-print/commit/bafdb12fbc0787ee790c1bcb785bc22b68621162))
+
 ## [0.4.0](https://github.com/tdduydev/xdev-browser-print/compare/v0.3.3...v0.4.0) (2026-10-09)
 
 
