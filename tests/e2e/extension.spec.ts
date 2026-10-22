@@ -77,6 +77,16 @@ test.describe('extension popup', () => {
     await expect(popup.getByText('INTERNAL_ERROR: storage failed')).toBeVisible();
   });
 
+  test('test print from the popup follows the job to its result', async ({ context, extensionId, site, admin }) => {
+    await configure(admin, site.origin);
+    const popup = await openPopup(context, extensionId, site.origin);
+    await expect(popup.getByTestId('popup-test-profile')).toHaveValue('printer-a5');
+    const printOpened = context.waitForEvent('page', { predicate: (p) => p.url().includes('print.html') });
+    await popup.getByRole('button', { name: 'In thử máy in này' }).click();
+    await printOpened;
+    await expect(popup.getByTestId('test-msg')).toHaveText(/Hộp thoại in đã đóng/, { timeout: 15_000 });
+  });
+
   for (const url of ['chrome://settings', 'http://example.com/page']) {
     test(`unsupported page ${url} shows the unsupported-page message`, async ({ context, extensionId }) => {
       const popup = await openPopup(context, extensionId, url);
@@ -369,5 +379,39 @@ test.describe('resilience', () => {
       return out;
     });
     expect(codes).toEqual(['ok', 'ok', 'ok', 'RATE_LIMITED', 'RATE_LIMITED']);
+  });
+});
+
+test.describe('devices', () => {
+  test('a granted serial printer gets a profile in one click and its test print reports the bytes', async ({ context, admin }) => {
+    // Chrome's device chooser cannot be driven, so a granted port is stood in for in extension pages.
+    await context.addInitScript(() => {
+      if (location.protocol !== 'chrome-extension:') return;
+      let writable: WritableStream<Uint8Array> | null = null;
+      const port = {
+        getInfo: () => ({ usbVendorId: 0x1a86, usbProductId: 0x7523 }),
+        open: async () => {
+          writable = new WritableStream();
+        },
+        close: async () => {
+          writable = null;
+        },
+        get writable() {
+          return writable;
+        },
+      };
+      const serial = { getPorts: async () => [port], requestPort: async () => port, addEventListener() {}, removeEventListener() {} };
+      Object.defineProperty(navigator, 'serial', { configurable: true, value: serial });
+    });
+    await admin.reload();
+    await admin.getByTestId('nav-devices').click();
+    const row = admin.getByTestId('device-serial:1a86:7523:0');
+    await expect(row).toContainText('Chưa có máy in nào dùng thiết bị này');
+    await row.getByRole('button', { name: 'Tạo máy in K80' }).click();
+    await expect(row).not.toContainText('Chưa có máy in nào dùng thiết bị này', { timeout: 10_000 });
+    await row.getByRole('button', { name: 'In thử' }).click();
+    await expect(admin.getByTestId('test-msg')).toHaveText(/Máy in đã nhận đủ \d+ byte/, { timeout: 15_000 });
+    const { config } = await internal<{ config: { profiles: { id: string; adapter: string }[] } }>(admin, 'config.get');
+    expect(config.profiles).toContainEqual(expect.objectContaining({ id: 'serial-1a86-7523-0', adapter: 'webserial' }));
   });
 });

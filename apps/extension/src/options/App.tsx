@@ -48,7 +48,7 @@ export function App() {
             {screen === 'dashboard' && <Dashboard />}
             {screen === 'profiles' && <Profiles config={data.config} />}
             {screen === 'mappings' && <Mappings config={data.config} />}
-            {screen === 'devices' && <Devices />}
+            {screen === 'devices' && <Devices config={data.config} />}
             {screen === 'test' && <TestPrint config={data.config} />}
             {screen === 'history' && <History config={data.config} />}
             {screen === 'sites' && <Sites sites={data.sites} config={data.config} />}

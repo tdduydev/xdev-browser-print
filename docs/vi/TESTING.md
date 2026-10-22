@@ -127,6 +127,7 @@ File: `apps/extension/test/adapters.test.ts`. Các test này dùng thiết bị 
 | UI-02 | Tạo profile A5 và gán `PRESCRIPTION` qua giao diện | Bảng hiện profile và mapping; cấu hình lưu đúng |
 | UI-03 | Manifest | MV3, service worker dạng module, không có `content_scripts` tĩnh |
 | UI-04 | Tick "Hỏi xác nhận mỗi lần in" cho site hiện có trên màn hình Sites | Checkbox hiện đã tick; grant của site lưu `confirmEachJob = true`; job tiếp theo mở cửa sổ xác nhận | e2e |
+| UI-05 | Màn Thiết bị có một cổng serial đã cấp quyền, chưa có máy in: bấm **Tạo máy in K80** rồi **In thử** | Lưu profile `webserial` gắn với cổng; thông báo chờ job xong rồi hiện "Máy in đã nhận đủ N byte" | e2e |
 
 ### 4.6 Popup extension (e2e)
 
@@ -134,6 +135,7 @@ File: `apps/extension/test/adapters.test.ts`. Các test này dùng thiết bị 
 |---|---|---|
 | POP-01 | Mở popup trên localhost chưa ghép nối, ghép nối rồi thu hồi | Hiện nút ghép nối; grant hiển thị `read` + `print`; thu hồi trở về trạng thái chưa ghép nối |
 | POP-02 | Mở popup trên `chrome://settings` | Hiện `popup.unsupportedPage`, không thể ghép nối |
+| POP-03 | Bấm **In thử máy in này** trên popup với profile A5 mặc định | Mở cửa sổ in; popup theo dõi job và hiện "Hộp thoại in đã đóng" |
 
 ### 4.7 Demo React (e2e)
 
