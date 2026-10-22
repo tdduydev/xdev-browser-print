@@ -28,6 +28,26 @@ pnpm test        # unit + integration (142 test)
 pnpm test:e2e    # build SDK, demo React và extension bản e2e, rồi chạy Playwright (22 test)
 ```
 
+### Lab máy in ảo
+
+`pnpm lab` build SDK, demo và extension bản e2e, rồi mở Chromium với ba máy in, không cần phần cứng:
+
+| Chứng từ | Profile | Máy in |
+|---|---|---|
+| `PRESCRIPTION` (HTML) | `lab-a5`, `browser` | Hộp thoại in thật của Chrome: chọn **Save as PDF** hoặc **Microsoft Print to PDF** |
+| `RECEIPT` (ESC/POS) | `lab-k80`, `webserial` | Cổng serial ảo ghi lại mọi byte |
+| `LABEL` (ZPL) | `lab-label`, `webserial` | Như trên, cổng thứ hai |
+
+Mỗi job ghi lại được lưu vào `test-results/lab`: `<n>-<cổng>.bin` (đúng các byte đã gửi), `.txt` (hoá đơn như K80 sẽ in, kèm các lệnh ESC/POS; hoặc các trường ZPL) và `.zpl`.
+
+```bash
+pnpm lab            # có giao diện; tự bấm in trên demo, đóng trình duyệt để dừng
+pnpm lab --auto     # có giao diện; in sẵn hoá đơn và tem trước
+pnpm lab --check    # headless; thoát mã 1 nếu một trong hai job không kết thúc SUBMITTED / BYTES_WRITTEN_TO_PORT kèm byte trên cổng
+```
+
+Cổng ảo chỉ thay `navigator.serial` trong trang của extension, nên mọi bước từ lời gọi SDK đến lệnh ghi của adapter đều là thật. Lab không kiểm driver serial của hệ điều hành, WebUSB, kiosk printing hay giấy in ra: các mục đó vẫn thuộc BP-13 ([MANUAL-TEST.md](MANUAL-TEST.md)).
+
 ## 3. Phạm vi các cấp test
 
 | Cấp | Kiểm tra | Không kiểm tra |

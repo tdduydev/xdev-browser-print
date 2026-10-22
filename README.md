@@ -54,6 +54,7 @@ pnpm check:sdk-package # npm pack --dry-run + SDK checks (after build)
 pnpm package       # release/xdev-browser-print-<version>.zip
 pnpm cws:screenshots  # Chrome Web Store screenshots -> docs/images/cws (1280x800)
 pnpm showcase [app-dist] # end-to-end check of a built app + extension -> test-results/showcase (1280x800)
+pnpm lab [--auto|--check] # virtual printers: real extension + demo, receipt/label bytes decoded -> test-results/lab
 ```
 
 Install the extension: [Chrome Web Store](https://xdev.asia/browser-print/) (in review) or the release build — [download the latest ZIP](https://github.com/tdduydev/xdev-browser-print/releases/latest/download/xdev-browser-print.zip) and follow [docs/INSTALL.md](docs/INSTALL.md) ([Tiếng Việt](docs/vi/INSTALL.md)).
